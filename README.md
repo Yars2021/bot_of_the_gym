@@ -1,0 +1,1 @@
+# pip install asyncio aiohttp requests, если не будет работать
