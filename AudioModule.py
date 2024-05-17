@@ -58,10 +58,10 @@ class AudioModule(AbstractModule):
         self.SOUND_STATUS = True
 
     def activate(self):
-        super(SizeModule, self).activate()
+        super(AudioModule, self).activate()
 
     def deactivate(self):
-        super(SizeModule, self).deactivate()
+        super(AudioModule, self).deactivate()
 
     def get_music_status(self):
         return self.MUSIC_STATUS

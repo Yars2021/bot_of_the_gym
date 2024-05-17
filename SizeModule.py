@@ -4,6 +4,8 @@ from random import randint
 
 
 class SizeModule(AbstractModule):
+    FILE = "./.size_table"
+
     MESSAGES = [
         "Волшебная палочка",
         "Козырь в рукаве",
@@ -37,6 +39,11 @@ class SizeModule(AbstractModule):
 
     def get_messages(self):
         return self.MESSAGES
+
+    def export_users(self):
+        with open(self.FILE, 'w', encoding="utf-8") as f:
+            for user in self.USERS:
+                pass
 
     def get_size(self, user_id, username, date):
         def get_secret(max_chance):
