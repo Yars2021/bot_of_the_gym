@@ -12,9 +12,7 @@ def unify_datetime(user_date, user_time, timezone):
                    datetime.timedelta(hours=timezone)
 
     utc_date_str = str(datetime_utc.date())
-    utc_time_str = str(datetime_utc.time().hour) + ":" + \
-                   str(datetime_utc.time().minute) + ":" + \
-                   str(datetime_utc.time().second)
+    utc_time_str = datetime_utc.time().strftime("%H:%M:%S")
 
     return {
         "date": utc_date_str,
@@ -89,7 +87,7 @@ class NotificationsModule(AbstractModule):
 
             for notification in notifications:
                 server_time = datetime.datetime.now(datetime.timezone.utc)
-                server_time_str = str(server_time.hour) + ":" + str(server_time.minute) + ":" + str(server_time.second)
+                server_time_str = server_time.strftime("%H:%M:%S")
 
                 if not (filename == notification["date"] and server_time_str >= notification["time"]):
                     new_notifications.append(notification)
