@@ -1,7 +1,6 @@
 from AbstractModule import AbstractModule
 
 import aiohttp
-import discord
 import requests
 from random import randint
 
@@ -24,10 +23,10 @@ class PictureModule(AbstractModule):
         super().__init__("picture_mod")
 
     def activate(self):
-        super(SizeModule, self).activate()
+        super(PictureModule, self).activate()
 
     def deactivate(self):
-        super(SizeModule, self).deactivate()
+        super(PictureModule, self).deactivate()
 
     def get_topics(self):
         return self.PICTURE_TOPICS
