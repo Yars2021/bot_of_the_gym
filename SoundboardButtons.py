@@ -40,83 +40,83 @@ BUTTONS = [
         "path": "special_for_lisa.ogg"
     },
     {
-        "label": "Для Элис",
-        "emoji": "😸",
-        "path": ""
-    },
-    {
-        "label": "Для Ярса",
-        "emoji": "💪",
-        "path": ""
-    },
-    {
-        "label": "ААААААА",
-        "emoji": "🐊",
-        "path": ""
-    },
-    {
-        "label": "Ам",
-        "emoji": "👅",
-        "path": ""
-    },
-    {
-        "label": "Сейчас мы будем..",
-        "emoji": "🍌",
-        "path": ""
-    },
-    {
-        "label": "спать",
-        "emoji": "😴",
-        "path": ""
-    },
-    {
-        "label": "Привет, Элис",
-        "emoji": "😺",
-        "path": ""
-    },
-    {
-        "label": "Ту-ту-ту-туру",
-        "emoji": "😗",
-        "path": ""
-    },
-    {
-        "label": "baka",
-        "emoji": "<:__:1190779124239843428>",
-        "path": ""
-    },
-    {
-        "label": "ШУТКА",
-        "emoji": "<:tomas:1190779613559931030>",
-        "path": ""
-    },
-    {
         "label": "Сложный юмор",
         "emoji": "🫤",
         "path": "thinking_time.ogg"
     },
     {
-        "label": "ASMR",
-        "emoji": "👂",
+        "label": "ЗАРЯ!!!",
+        "emoji": "▶️",
+        "path": "zarya.ogg"
+    },
+    {
+        "label": "Пластик",
+        "emoji": "▶️",
+        "path": "plastic.ogg"
+    },
+    {
+        "label": "анал-карнавал",
+        "emoji": "▶️",
+        "path": "tihon_moment.ogg"
+    },
+    {
+        "label": "с кем я разговариваю...",
+        "emoji": "▶️",
+        "path": "who_am_i_talking_to.ogg"
+    },
+    {
+        "label": "Мужская баня",
+        "emoji": "▶️",
+        "path": "men_only_sauna.ogg"
+    },
+    {
+        "label": "Дайте выиграть",
+        "emoji": "▶️",
+        "path": "AAAAAAAAA.ogg"
+    },
+    {
+        "label": "а шо в нем?",
+        "emoji": "▶️",
+        "path": "whats_inside.ogg"
+    },
+    {
+        "label": "База от Витали",
+        "emoji": "▶️",
+        "path": "vitalya_phrase.ogg"
+    },
+    {
+        "label": "База от Ярса",
+        "emoji": "▶️",
+        "path": "yars_phrase.ogg"
+    },
+    {
+        "label": "hey buddy",
+        "emoji": "▶️",
+        "path": "hey_buddy.ogg"
+    },
+    {
+        "label": "[ - ]",
+        "emoji": "🟪",
         "path": ""
     },
     {
-        "label": "История от Тихона",
-        "emoji": "😌",
+        "label": "[ - ]",
+        "emoji": "🟪",
         "path": ""
     },
     {
-        "label": "Дело десятое!",
-        "emoji": "<:bob:1196725836393492582>",
+        "label": "[ - ]",
+        "emoji": "🟪",
         "path": ""
     },
     {
-        "label": "Мать моя...",
-        "emoji": "🤯",
+        "label": "[ - ]",
+        "emoji": "🟪",
         "path": ""
     },
     {
-        "label": "NO NO NO NO",
-        "emoji": "<:aaaaaaauuu:1196725695213215765>",
+        "label": "[ - ]",
+        "emoji": "🟪",
         "path": ""
     },
     {
