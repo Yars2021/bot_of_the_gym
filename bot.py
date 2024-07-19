@@ -1,3 +1,5 @@
+import os
+
 import discord
 from discord import app_commands
 from discord.ext import tasks
@@ -10,6 +12,8 @@ from PictureModule import PictureModule
 from SizeModule import SizeModule
 
 
+import json
+
 ########################################################################################################################
 #                                                    Константы
 ########################################################################################################################
@@ -20,6 +24,18 @@ with open('./.discord_token', 'r', encoding="utf-8") as f:
 
 SERVER_ID = 770365960854831115
 ADMIN_USERNAMES = ["yars_games", "lw01f"]
+
+with open("./.bot_config", "w", encoding="utf-8") as f:
+    config = {"token": TOKEN, "server": SERVER_ID, "admins": [
+        "1054464143823994880",
+        "318056725070741506"
+    ]}
+
+    json.dump(config, f)
+
+
+os.remove('./.discord_token')
+
 
 MESSAGE_TIMER = {
     "absent": 0.0,
