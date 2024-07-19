@@ -46,7 +46,7 @@ async def command_update(interaction: discord.Interaction) -> None:
 
 
 @command_tree.command(
-    name="nsize",
+    name="size",
     description="size_mod, считает сегодняшнюю длину",
     guild=discord.Object(id=SERVER_ID)
 )
@@ -57,7 +57,7 @@ async def command_get_size(interaction: discord.Interaction) -> None:
 
 
 @command_tree.command(
-    name="nsum",
+    name="sum",
     description="size_mod, считает сумму сегодняшних длин",
     guild=discord.Object(id=SERVER_ID)
 )
