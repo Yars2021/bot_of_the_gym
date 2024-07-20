@@ -14,6 +14,7 @@ TOKEN, SERVER_ID, ADMIN_IDS = utils.read_config("./.bot_config")
 
 intents = discord.Intents.default()
 intents.dm_messages = True
+intents.members = True
 client = discord.Client(intents=intents)
 command_tree = app_commands.CommandTree(client)
 
@@ -24,7 +25,7 @@ command_tree = app_commands.CommandTree(client)
 
 
 @command_tree.command(
-    name="nupdate",
+    name="update",
     description="Обновить бота",
     guild=discord.Object(id=SERVER_ID)
 )
@@ -74,7 +75,11 @@ async def command_get_sum(interaction: discord.Interaction) -> None:
     guild=discord.Object(id=SERVER_ID)
 )
 async def command_get_stats(interaction: discord.Interaction) -> None:
-    await interaction.response.send_message(size_module.get_stats(
+    global SERVER_ID
+    global client
+
+    await interaction.response.send_message(await size_module.get_stats(
+        client.get_guild(int(SERVER_ID)),
         interaction.created_at), delete_after=utils.MESSAGE_TIMER[2])
 
 
@@ -103,5 +108,6 @@ async def on_ready():
     await utils.show_patchonote(client)
 
     print("Bot is up!")
+
 
 client.run(TOKEN)

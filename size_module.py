@@ -109,7 +109,7 @@ def get_sum(date):
     return "Сумма за сегодня = " + str(size_sum) + " см"
 
 
-def get_stats(date):
+async def get_stats(guild, date):
     global FILE
 
     with open(FILE, "r", encoding="utf-8") as f:
@@ -123,5 +123,17 @@ def get_stats(date):
     call_year = str(date.date().year)
 
     daily_stats = ""
+
+    members = guild.fetch_members(limit=None)
+
+    async for member in members:
+        for user in stats:
+            if stats[user][0] == call_date and user == str(member.id):
+                if member.nick is not None:
+                    display = member.nick
+                else:
+                    display = member.global_name
+
+                daily_stats += "\t" + display + ": " + str(stats[user][1]) + " см " + stats[user][2] + "\n"
 
     return "Статистика за " + call_day + "." + call_month + "." + call_year + ":\n" + daily_stats
