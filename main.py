@@ -38,7 +38,7 @@ async def command_update(interaction: discord.Interaction) -> None:
     else:
         await interaction.response.send_message("Обновление...",
                                                 ephemeral=True,
-                                                delete_after=utils.MESSAGE_TIMER[1])
+                                                delete_after=utils.MESSAGE_TIMER[0])
         await utils.update_bot(interaction)
 
 
@@ -94,13 +94,14 @@ async def command_get_stats(interaction: discord.Interaction) -> None:
 
 @client.event
 async def on_ready():
+    global client
     global command_tree
 
+    size_module.init()
+
     await command_tree.sync(guild=discord.Object(id=SERVER_ID))
+    await utils.show_patchonote(client)
 
     print("Bot is up!")
 
-size_module.init()
-
 client.run(TOKEN)
-utils.show_patchonote(client)
