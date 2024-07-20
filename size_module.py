@@ -126,6 +126,8 @@ async def get_stats(guild, date):
 
     members = guild.fetch_members(limit=None)
 
+    index = 1
+
     async for member in members:
         for user in stats:
             if stats[user][0] == call_date and user == str(member.id):
@@ -134,6 +136,7 @@ async def get_stats(guild, date):
                 else:
                     display = member.global_name
 
-                daily_stats += "\t" + display + ": " + str(stats[user][1]) + " см " + stats[user][2] + "\n"
+                daily_stats += str(index) + ". " + display + ": " + str(stats[user][1]) + " см " + stats[user][2] + "\n"
+                index += 1
 
-    return "Статистика за " + call_day + "." + call_month + "." + call_year + ":\n" + daily_stats
+    return "Статистика за " + call_day + "." + call_month + "." + call_year, daily_stats

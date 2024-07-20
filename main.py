@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import tasks
 
+import music_module
 import size_module
 import utils
 
@@ -50,7 +51,7 @@ async def command_update(interaction: discord.Interaction) -> None:
 
 @command_tree.command(
     name="size",
-    description="size_mod, считает сегодняшнюю длину",
+    description="size_mod, Считает сегодняшнюю длину",
     guild=discord.Object(id=SERVER_ID)
 )
 async def command_get_size(interaction: discord.Interaction) -> None:
@@ -61,7 +62,7 @@ async def command_get_size(interaction: discord.Interaction) -> None:
 
 @command_tree.command(
     name="sum",
-    description="size_mod, считает сумму сегодняшних длин",
+    description="size_mod, Считает сумму сегодняшних длин",
     guild=discord.Object(id=SERVER_ID)
 )
 async def command_get_sum(interaction: discord.Interaction) -> None:
@@ -71,17 +72,17 @@ async def command_get_sum(interaction: discord.Interaction) -> None:
 
 @command_tree.command(
     name="stats",
-    description="size_mod, показывает сегодняшнюю статистику",
+    description="size_mod, Показывает сегодняшнюю статистику",
     guild=discord.Object(id=SERVER_ID)
 )
 async def command_get_stats(interaction: discord.Interaction) -> None:
     global SERVER_ID
     global client
 
-    await interaction.response.send_message(await size_module.get_stats(
-        client.get_guild(int(SERVER_ID)),
-        interaction.created_at), delete_after=utils.MESSAGE_TIMER[2])
+    title, table = await size_module.get_stats(client.get_guild(int(SERVER_ID)), interaction.created_at)
+    stats_embed = discord.Embed(title=title, description=table, colour=0xf5e000)
 
+    await interaction.response.send_message(embed=stats_embed, delete_after=utils.MESSAGE_TIMER[2])
 
 
 ########################################################################################################################
@@ -89,7 +90,52 @@ async def command_get_stats(interaction: discord.Interaction) -> None:
 ########################################################################################################################
 
 
+@command_tree.command(
+    name="play",
+    description="music_mod, Играть по ссылке или названию (YouTube)",
+    guild=discord.Object(id=SERVER_ID)
+)
+async def command_play(interaction: discord.Interaction, request: str) -> None:
+    await interaction.response.send_message("Ищу...", delete_after=utils.MESSAGE_TIMER[0])
+    await music_module.find_and_queue(interaction, request)
+    await music_module.listen_activity(interaction.guild.voice_client, 10)
 
+    print(client.voice_clients)
+
+    await music_module.check_voice(interaction.guild.voice_client, 5)
+
+
+# @command_tree.command(
+#     name="rplay",
+#     description="music_mod, ♂Играть♂ по названию (YouTube)",
+#     guild=discord.Object(id=SERVER_ID)
+# )
+# async def command_rplay(interaction: discord.Interaction, request: str) -> None:
+#     global SERVER_ID
+#
+#     await interaction.response.send_message("♂Ищу♂...", delete_after=utils.MESSAGE_TIMER[0])
+#     await music_module.find_and_queue(interaction, request + " right version")
+#
+#     await music_module.listen_activity(client.voice_clients, 10)
+#     await music_module.check_voice(interaction.guild.voice_client, 5)
+
+
+@command_tree.command(
+    name="queue",
+    description="music_mod, Показать очередь",
+    guild=discord.Object(id=SERVER_ID)
+)
+async def command_queue(interaction: discord.Interaction) -> None:
+    await music_module.show_queue(interaction)
+
+
+@command_tree.command(
+    name="song",
+    description="music_mod, Подробнее о текущей песне",
+    guild=discord.Object(id=SERVER_ID)
+)
+async def command_song(interaction: discord.Interaction) -> None:
+    await music_module.show_song_info(interaction)
 
 
 ########################################################################################################################
