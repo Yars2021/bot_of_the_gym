@@ -30,7 +30,7 @@ async def update_bot(interaction):
         for i in range(1, len(lines)):
             description += lines[i] + "\n"
 
-        await interaction.channel.send(embed=Embed(title=lines[0], description=description, colour=0x00b0f4))
+        await interaction.followup.send(embed=Embed(title=lines[0], description=description, colour=0x00b0f4))
 
         sys.exit()
 
