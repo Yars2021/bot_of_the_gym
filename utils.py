@@ -21,7 +21,6 @@ async def update_bot(interaction):
     try:
         subprocess.run(["git", "pull"])
         subprocess.run([sys.executable, "main.py"])
-        await asyncio.sleep(10)
 
         with open("./README.md", "r", encoding="utf-8") as patch_note:
             lines = patch_note.readlines()
@@ -33,7 +32,7 @@ async def update_bot(interaction):
 
         await interaction.channel.send(embed=Embed(title=lines[0], description=description, colour=0x00b0f4))
 
-        quit()
+        sys.exit()
 
     except Exception as e:
         await interaction.followup.send(f"При обновлении произошла ошибка: {e}", ephemeral=True)
