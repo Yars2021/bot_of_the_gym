@@ -31,7 +31,7 @@ command_tree = app_commands.CommandTree(client)
 async def command_update(interaction: discord.Interaction) -> None:
     global ADMIN_IDS
 
-    if interaction.user.id not in ADMIN_IDS:
+    if str(interaction.user.id) not in ADMIN_IDS:
         await interaction.response.send_message("Недостаточно прав", ephemeral=True)
     else:
         await interaction.response.send_message("Обновление...", ephemeral=True)
