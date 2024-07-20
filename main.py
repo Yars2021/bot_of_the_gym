@@ -32,9 +32,13 @@ async def command_update(interaction: discord.Interaction) -> None:
     global ADMIN_IDS
 
     if str(interaction.user.id) not in ADMIN_IDS:
-        await interaction.response.send_message("Недостаточно прав", ephemeral=True)
+        await interaction.response.send_message("Недостаточно прав",
+                                                ephemeral=True,
+                                                delete_after=utils.MESSAGE_TIMER[1])
     else:
-        await interaction.response.send_message("Обновление...", ephemeral=True)
+        await interaction.response.send_message("Обновление...",
+                                                ephemeral=True,
+                                                delete_after=utils.MESSAGE_TIMER[1])
         await utils.update_bot(interaction)
 
 
