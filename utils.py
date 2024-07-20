@@ -17,6 +17,12 @@ def read_config(path):
     return config["token"], config["server"], config["admins"]
 
 
+async def restart(interaction, lines, description):
+    await interaction.followup.send(embed=Embed(title=lines[0], description=description, colour=0x00b0f4))
+
+    sys.exit(-1)
+
+
 async def update_bot(interaction):
     try:
         subprocess.run(["git", "pull"])
@@ -30,9 +36,7 @@ async def update_bot(interaction):
         for i in range(1, len(lines)):
             description += lines[i] + "\n"
 
-        await interaction.followup.send(embed=Embed(title=lines[0], description=description, colour=0x00b0f4))
-
-        sys.exit()
+        await restart(interaction, lines, description)
 
     except Exception as e:
         await interaction.followup.send(f"При обновлении произошла ошибка: {e}", ephemeral=True)
