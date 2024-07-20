@@ -1,4 +1,5 @@
 import ast
+import asyncio
 import subprocess
 import sys
 
@@ -19,6 +20,8 @@ def read_config(path):
 async def update_bot(interaction):
     try:
         subprocess.run(["git", "pull"])
+        subprocess.run([sys.executable, "main.py"])
+        await asyncio.sleep(10)
 
         with open("./README.md", "r", encoding="utf-8") as patch_note:
             lines = patch_note.readlines()
@@ -29,8 +32,6 @@ async def update_bot(interaction):
             description += lines[i] + "\n"
 
         await interaction.followup.send(embed=Embed(title=lines[0], description=description, colour=0x00b0f4))
-
-        subprocess.run([sys.executable, "main.py"])
 
         quit()
 
