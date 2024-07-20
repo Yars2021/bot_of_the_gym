@@ -91,6 +91,8 @@ def get_size(user_id, date):
 
 
 def get_sum(date):
+    global FILE
+
     with open(FILE, "r", encoding="utf-8") as f:
         stats = ast.literal_eval(f.read())
 
@@ -108,6 +110,8 @@ def get_sum(date):
 
 
 def get_stats(date):
+    global FILE
+
     with open(FILE, "r", encoding="utf-8") as f:
         stats = ast.literal_eval(f.read())
 

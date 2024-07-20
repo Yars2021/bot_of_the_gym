@@ -24,7 +24,7 @@ command_tree = app_commands.CommandTree(client)
 
 
 @command_tree.command(
-    name="update",
+    name="nupdate",
     description="Обновить бота",
     guild=discord.Object(id=SERVER_ID)
 )
@@ -73,7 +73,7 @@ async def command_get_sum(interaction: discord.Interaction) -> None:
     description="size_mod, показывает сегодняшнюю статистику",
     guild=discord.Object(id=SERVER_ID)
 )
-async def command_get_sum(interaction: discord.Interaction) -> None:
+async def command_get_stats(interaction: discord.Interaction) -> None:
     await interaction.response.send_message(size_module.get_stats(
         interaction.created_at), delete_after=utils.MESSAGE_TIMER[2])
 
@@ -103,3 +103,4 @@ async def on_ready():
 size_module.init()
 
 client.run(TOKEN)
+utils.show_patchonote(client)
