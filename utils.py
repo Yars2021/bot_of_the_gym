@@ -22,7 +22,7 @@ async def update_bot(interaction):
         subprocess.run(["git", "pull"])
         subprocess.run([sys.executable, "main.py"])
 
-        with open("./README.md", "r", encoding="utf-8") as patch_note:
+        with open("./PATCHNOTE.md", "r", encoding="utf-8") as patch_note:
             lines = patch_note.readlines()
 
         description = ""
