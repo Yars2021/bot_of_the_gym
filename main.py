@@ -1,5 +1,3 @@
-import datetime
-
 import discord
 from discord import app_commands
 from discord.ext import tasks
@@ -63,7 +61,18 @@ async def command_get_size(interaction: discord.Interaction) -> None:
 )
 async def command_get_sum(interaction: discord.Interaction) -> None:
     await interaction.response.send_message(size_module.get_sum(
-        interaction.created_at), delete_after=utils.MESSAGE_TIMER[1])
+        interaction.created_at), delete_after=utils.MESSAGE_TIMER[2])
+
+
+@command_tree.command(
+    name="stats",
+    description="size_mod, показывает сегодняшнюю статистику",
+    guild=discord.Object(id=SERVER_ID)
+)
+async def command_get_sum(interaction: discord.Interaction) -> None:
+    await interaction.response.send_message(size_module.get_stats(
+        interaction.created_at), delete_after=utils.MESSAGE_TIMER[2])
+
 
 
 ########################################################################################################################

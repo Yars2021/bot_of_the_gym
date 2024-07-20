@@ -32,7 +32,7 @@ def init():
     global FILE
 
     if not os.path.exists(FILE):
-        with open(FILE, "w") as f:
+        with open(FILE, "w", encoding="utf-8") as f:
             f.write("{}")
 
         f.close()
@@ -56,7 +56,7 @@ def get_size(user_id, date):
     global MESSAGES
     global FILE
 
-    with open(FILE, "r") as f:
+    with open(FILE, "r", encoding="utf-8") as f:
         stats = ast.literal_eval(f.read())
 
     f.close()
@@ -81,7 +81,7 @@ def get_size(user_id, date):
 
         stats[user_id] = [call_date, randint(1, 40), secret, next_chance]
 
-    with(open(FILE, "w")) as f:
+    with(open(FILE, "w", encoding="utf-8")) as f:
         json.dump(stats, f)
 
     f.close()
@@ -91,7 +91,7 @@ def get_size(user_id, date):
 
 
 def get_sum(date):
-    with open(FILE, "r") as f:
+    with open(FILE, "r", encoding="utf-8") as f:
         stats = ast.literal_eval(f.read())
 
     f.close()
@@ -105,3 +105,19 @@ def get_sum(date):
             size_sum += stats[user][1]
 
     return "Сумма за сегодня = " + str(size_sum) + " см"
+
+
+def get_stats(date):
+    with open(FILE, "r", encoding="utf-8") as f:
+        stats = ast.literal_eval(f.read())
+
+    f.close()
+
+    call_date = str(date.date())
+    call_day = str(date.date().day)
+    call_month = str(date.date().month)
+    call_year = str(date.date().year)
+
+    daily_stats = ""
+
+    return "Статистика за " + call_day + "." + call_month + "." + call_year + ":\n" + daily_stats
