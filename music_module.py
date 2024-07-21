@@ -107,7 +107,7 @@ def fetch_files_yt(url):
     return tracks
 
 
-def pop_and_continue(voice_client):
+def pop_and_continue():
     global IS_LOOPED
     global IS_PLAYING
     global SKIP_FLAG
@@ -127,20 +127,21 @@ def pop_and_continue(voice_client):
     if len(SONG_QUEUE) <= 0:
         clean_files()
 
-    play_first(voice_client)
+    play()
 
 
-def play_first(voice_client):
+def play():
     global FFMPEG_OPTIONS
     global IS_PLAYING
     global SONG_QUEUE
+    global voice_client
 
     if len(SONG_QUEUE) > 0 and not IS_PLAYING:
         IS_PLAYING = True
 
         if voice_client is not None and voice_client.is_connected():
             voice_client.play(discord.FFmpegPCMAudio(source=SONG_QUEUE[0]["filename"], **FFMPEG_OPTIONS),
-                              after=lambda e: pop_and_continue(voice_client))
+                              after=lambda e: pop_and_continue())
 
 
 async def join_channel(interaction):
@@ -150,14 +151,10 @@ async def join_channel(interaction):
     voice_client = interaction.guild.voice_client
     voice_channel = interaction.user.voice.channel
 
-    if voice_client is None or not voice_client.is_connected():
-        voice_client = await voice_channel.connect()
+    if voice_client is None:
+        voice_client = await voice_channel.connect(reconnect=True)
     else:
-        await voice_client.move_to(interaction.user.voice.channel)
-
-
-async def leave_channel():
-    pass
+        await voice_client.move_to(voice_channel)
 
 
 async def find(interaction, request: str):
@@ -167,7 +164,7 @@ async def find(interaction, request: str):
 
     if header_code != 0:
         await original_response.edit(content="", embed=discord.Embed(
-            title="По запросу ничего не найдено",
+            description="По запросу ничего не найдено",
             colour=0xf50000))
     else:
         if len(titles) == 1:
@@ -186,6 +183,20 @@ async def find(interaction, request: str):
     return header_code
 
 
+async def reset_player(interaction):
+    global IS_LOOPED
+    global player
+
+    if player is not None:
+        await player.delete()
+
+    if len(SONG_QUEUE) > 0:
+        player = await interaction.channel.send(view=PlayerPanel(), embed=discord.Embed(
+            title="Сейчас играет",
+            description=SONG_QUEUE[0]["title"],
+            colour=0x7a00f5))
+
+
 async def load(interaction, request: str):
     global SONG_QUEUE
     global player
@@ -193,20 +204,12 @@ async def load(interaction, request: str):
     for entry in fetch_files_yt(request):
         SONG_QUEUE.append(entry)
 
-    if len(SONG_QUEUE) <= 0:
-        await interaction.channel.send(embed=discord.Embed(
-            title="Ошибка скачивания",
-            colour=0xf50000))
+    if len(SONG_QUEUE) > 0:
+        await reset_player(interaction)
     else:
-        player = await interaction.channel.send(view=PlayerPanel(), embed=discord.Embed(
-                title="Сейчас играет",
-                description=SONG_QUEUE[0]["title"],
-                colour=0x7a00f5))
-
-
-async def play():
-    # play_first(interaction.guild.voice_client)
-    pass
+        await interaction.channel.send(embed=discord.Embed(
+            description="Ошибка скачивания",
+            colour=0xf50000))
 
 
 async def show_queue(interaction):
@@ -238,19 +241,35 @@ async def show_song_info(interaction):
 
 
 async def terminate():
+    global IS_LOOPED
+    global IS_PLAYING
+    global SKIP_FLAG
+    global SONG_QUEUE
+    global player
     global voice_client
     global voice_channel
 
     clean_files()
 
-    if voice_client is not None:
-        await voice_client.disconnect()
-
-    voice_channel = None
     voice_client = None
+    voice_channel = None
+    IS_LOOPED = False
+    IS_PLAYING = False
+    SKIP_FLAG = False
+    SONG_QUEUE = []
 
     if player is not None:
         await player.delete()
+
+    player = None
+
+
+async def update_channel(channel):
+    global voice_client
+    global voice_channel
+
+    if voice_client is not None and channel is not None:
+        await voice_client.move_to(channel)
 
 
 class PlayerPanel(discord.ui.View):
@@ -265,8 +284,12 @@ class PlayerPanel(discord.ui.View):
         emoji="⏹️"
     )
     async def stop(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        global voice_client
+
         await interaction.response.edit_message(content="")
-        await terminate()
+
+        if voice_client is not None:
+            await voice_client.disconnect()
 
     @discord.ui.button(
         custom_id="skip_btn",
@@ -276,11 +299,40 @@ class PlayerPanel(discord.ui.View):
         emoji="⏩"
     )
     async def skip(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        global SKIP_FLAG
         global SONG_QUEUE
         global player
         global voice_client
-        global voice_channel
 
         await interaction.response.edit_message(content="")
 
-        # ToDo
+        SKIP_FLAG = True
+
+        if voice_client is not None:
+            voice_client.stop()
+
+        if len(SONG_QUEUE) > 1:
+            await reset_player(interaction)
+            play()
+        else:
+            if voice_client is not None:
+                await voice_client.disconnect()
+
+    @discord.ui.button(
+        custom_id="loop_btn",
+        label="",
+        row=0,
+        style=discord.ButtonStyle.secondary,
+        emoji="🔁"
+    )
+    async def loop(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        global IS_LOOPED
+
+        IS_LOOPED = not IS_LOOPED
+
+        if IS_LOOPED:
+            button.style = discord.ButtonStyle.primary
+        else:
+            button.style = discord.ButtonStyle.secondary
+
+        await interaction.response.edit_message(content="", view=self)

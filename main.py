@@ -98,7 +98,9 @@ async def command_get_stats(interaction: discord.Interaction) -> None:
 )
 async def command_play(interaction: discord.Interaction, request: str) -> None:
     if interaction.user.voice is None or interaction.user.voice.channel is None:
-        await interaction.response.send_message("Для использования нужно находиться в голосовом канале", ephemeral=True)
+        await interaction.response.send_message(embed=discord.Embed(
+            description="Для использования нужно находиться в голосовом канале",
+            colour=0xf50000), ephemeral=True)
     else:
         await interaction.response.send_message("Ищу... Это может занять некоторе время")
 
@@ -107,7 +109,8 @@ async def command_play(interaction: discord.Interaction, request: str) -> None:
         if header_code == 0:
             await music_module.load(interaction, request)
             await music_module.join_channel(interaction)
-            #   start_playing
+
+            music_module.play()
 
 
 # @command_tree.command(
@@ -147,8 +150,11 @@ async def command_song(interaction: discord.Interaction) -> None:
 async def on_voice_state_update(member, before, after):
     global client
 
-    if after.channel is None and member == client.user:
-        await music_module.terminate()
+    if member == client.user:
+        if after.channel is None:
+            await music_module.terminate()
+        elif before.channel is not None and after.channel != before.channel:
+            await music_module.update_channel(after.channel)
 
 
 ########################################################################################################################
