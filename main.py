@@ -1,6 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import tasks
+import os
 
 import music_module
 import size_module
@@ -96,13 +97,17 @@ async def command_get_stats(interaction: discord.Interaction) -> None:
     guild=discord.Object(id=SERVER_ID)
 )
 async def command_play(interaction: discord.Interaction, request: str) -> None:
-    await interaction.response.send_message("Ищу...", delete_after=utils.MESSAGE_TIMER[0])
-    await music_module.find_and_queue(interaction, request)
-    await music_module.listen_activity(interaction.guild.voice_client, 10)
+    if interaction.user.voice is None or interaction.user.voice.channel is None:
+        await interaction.response.send_message("Для использования нужно находиться в голосовом канале", ephemeral=True)
+    else:
+        await interaction.response.send_message("Ищу... Это может занять некоторе время")
 
-    print(client.voice_clients)
+        header_code = await music_module.find(interaction, request)
 
-    await music_module.check_voice(interaction.guild.voice_client, 5)
+        if header_code == 0:
+            await music_module.load(interaction, request)
+            await music_module.join_channel(interaction)
+            #   start_playing
 
 
 # @command_tree.command(
@@ -136,6 +141,14 @@ async def command_queue(interaction: discord.Interaction) -> None:
 )
 async def command_song(interaction: discord.Interaction) -> None:
     await music_module.show_song_info(interaction)
+
+
+@client.event
+async def on_voice_state_update(member, before, after):
+    global client
+
+    if after.channel is None and member == client.user:
+        await music_module.terminate()
 
 
 ########################################################################################################################

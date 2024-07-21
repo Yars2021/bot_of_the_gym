@@ -1,4 +1,3 @@
-import asyncio
 import discord
 import os
 import yt_dlp
@@ -9,8 +8,7 @@ MUSIC_ROOT = os.path.dirname(__file__)
 MUSIC_DIR = "yt"
 
 FFMPEG_OPTIONS = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-    'options': '-vn'
+    "options": "-vn"
 }
 
 YTDL_OPTIONS = {
@@ -24,8 +22,13 @@ YTDL_OPTIONS = {
     "quiet": True,
     "no_warnings": True,
     "default_search": "auto",
-    "source_address": "0.0.0.0"
+    "source_address": "0.0.0.0",
+    "force-ipv4": True,
+    "preferredcodec": "mp3",
+    "cachedir": False
 }
+
+YTDL = yt_dlp.YoutubeDL(YTDL_OPTIONS)
 
 IS_LOOPED = False
 
@@ -34,6 +37,10 @@ IS_PLAYING = False
 SKIP_FLAG = False
 
 SONG_QUEUE = []
+
+player = None
+voice_client = None
+voice_channel = None
 
 
 def clean_files():
@@ -50,24 +57,13 @@ def remove_file(path):
         os.system("rm -f " + "./" + MUSIC_DIR + "/" + path)
 
 
-def terminate():
-    global IS_PLAYING
-    global SONG_QUEUE
-
-    IS_PLAYING = False
-    SONG_QUEUE = []
-
-    clean_files()
-
-
-# Получить названия по ссылке
 def fetch_header_yt(url):
-    global YTDL_OPTIONS
+    global YTDL
 
     titles = []
 
     try:
-        info = yt_dlp.YoutubeDL(YTDL_OPTIONS).extract_info(url, download=False)
+        info = YTDL.extract_info(url, download=False)
 
         if "entries" not in info:
             titles.append(info["title"])
@@ -75,50 +71,42 @@ def fetch_header_yt(url):
             for entry in info["entries"]:
                 titles.append(entry["title"])
 
-        return {
-            "code": 0,
-            "titles": titles
-        }
+        return 0, titles
+
     except Exception as e:
         print(f"Ошибка поиска (анализ имен): {e}")
 
-        return {
-            "code": -1,
-            "titles": []
-        }
+        return -1, []
 
 
-# Найти и скачать звук по ссылке
 def fetch_files_yt(url):
-    global YTDL_OPTIONS
+    global YTDL
 
     tracks = []
 
-    with yt_dlp.YoutubeDL(YTDL_OPTIONS) as ydl:
-        try:
-            info = ydl.extract_info(url, download=True)
+    try:
+        info = YTDL.extract_info(url, download=True)
 
-            if "entries" not in info:
-                tracks = [{
-                    "title": info["title"],
-                    "thumbnail": info["thumbnail"],
-                    "filename": ydl.prepare_filename(info)
-                }]
-            else:
-                for entry in info["entries"]:
-                    tracks.append({
-                        "title": entry["title"],
-                        "thumbnail": entry["thumbnail"],
-                        "filename": ydl.prepare_filename(entry)
-                    })
+        if "entries" not in info:
+            tracks = [{
+                "title": info["title"],
+                "thumbnail": info["thumbnail"],
+                "filename": YTDL.prepare_filename(info)
+            }]
+        else:
+            for entry in info["entries"]:
+                tracks.append({
+                    "title": entry["title"],
+                    "thumbnail": entry["thumbnail"],
+                    "filename": YTDL.prepare_filename(entry)
+                })
 
-        except Exception as e:
-            print(f"Ошибка поиска (скачивание): {e}")
+    except Exception as e:
+        print(f"Ошибка поиска (скачивание источников): {e}")
 
     return tracks
 
 
-# Перейти к следующему элементу очереди. Добавить в конец только что сыгранный элемент, если IS_LOOPED
 def pop_and_continue(voice_client):
     global IS_LOOPED
     global IS_PLAYING
@@ -142,86 +130,83 @@ def pop_and_continue(voice_client):
     play_first(voice_client)
 
 
-# Найти и сыграть 0-й запрос из очереди
 def play_first(voice_client):
+    global FFMPEG_OPTIONS
     global IS_PLAYING
     global SONG_QUEUE
 
-    if len(SONG_QUEUE) <= 0 or IS_PLAYING:
-        return
+    if len(SONG_QUEUE) > 0 and not IS_PLAYING:
+        IS_PLAYING = True
 
-    IS_PLAYING = True
-
-    if voice_client is not None and voice_client.is_connected():
-        voice_client.play(discord.FFmpegPCMAudio(SONG_QUEUE[0]["filename"]),
-                          after=lambda e: pop_and_continue(voice_client))
+        if voice_client is not None and voice_client.is_connected():
+            voice_client.play(discord.FFmpegPCMAudio(source=SONG_QUEUE[0]["filename"], **FFMPEG_OPTIONS),
+                              after=lambda e: pop_and_continue(voice_client))
 
 
-async def find_and_queue(interaction, request: str):
-    global IS_PLAYING
-    global SONG_QUEUE
+async def join_channel(interaction):
+    global voice_client
+    global voice_channel
 
-    yt_header = fetch_header_yt(request)
+    voice_client = interaction.guild.voice_client
+    voice_channel = interaction.user.voice.channel
 
-    if yt_header["code"] != 0:
-        await interaction.channel.send(embed=discord.Embed(title="По запросу ничего не найдено", colour=0xf50000))
-        return
-
-    if len(yt_header["titles"]) == 1:
-        await interaction.channel.send("Добавляю в очередь -- " + yt_header["titles"][0])
+    if voice_client is None or not voice_client.is_connected():
+        voice_client = await voice_channel.connect()
     else:
-        playlist = ""
+        await voice_client.move_to(interaction.user.voice.channel)
 
-        for index in range(len(yt_header["titles"])):
-            playlist += (str(index + 1) + ". " + yt_header["titles"][index] + "\n")
 
-        print("Добавляю в очередь -- ПЛЕЙЛИСТ:\n" + playlist)
+async def leave_channel():
+    pass
+
+
+async def find(interaction, request: str):
+    original_response = await interaction.original_response()
+
+    header_code, titles = fetch_header_yt(request)
+
+    if header_code != 0:
+        await original_response.edit(content="", embed=discord.Embed(
+            title="По запросу ничего не найдено",
+            colour=0xf50000))
+    else:
+        if len(titles) == 1:
+            queued = titles[0]
+        else:
+            queued = ""
+
+            for index in range(len(titles)):
+                queued += str(index + 1) + ". " + titles[index] + "\n"
+
+        await original_response.edit(content="", embed=discord.Embed(
+            title="Добавляю в очередь",
+            description=queued,
+            colour=0x00b0f4))
+
+    return header_code
+
+
+async def load(interaction, request: str):
+    global SONG_QUEUE
+    global player
 
     for entry in fetch_files_yt(request):
         SONG_QUEUE.append(entry)
 
-    voice_client = interaction.guild.voice_client
-
-    if not IS_PLAYING:
-        voice_channel = interaction.user.voice.channel
-
-        if voice_client is None or not voice_client.is_connected():
-            voice_client = await voice_channel.connect()
-        else:
-            await voice_client.move_to(voice_channel)
-
-    play_first(voice_client)
-
-
-async def listen_activity(voice_client, timeout):
-    global IS_PLAYING
-
-    while IS_PLAYING:
-        await asyncio.sleep(1)
+    if len(SONG_QUEUE) <= 0:
+        await interaction.channel.send(embed=discord.Embed(
+            title="Ошибка скачивания",
+            colour=0xf50000))
     else:
-        await asyncio.sleep(timeout)
-
-        while IS_PLAYING:
-            break
-        else:
-            terminate()
-
-            if voice_client is not None:
-                await voice_client.disconnect()
+        player = await interaction.channel.send(view=PlayerPanel(), embed=discord.Embed(
+                title="Сейчас играет",
+                description=SONG_QUEUE[0]["title"],
+                colour=0x7a00f5))
 
 
-async def check_voice(voice_client, timeout):
-    global IS_PLAYING
-
-    while voice_client is not None:
-        await asyncio.sleep(1)
-    else:
-        await asyncio.sleep(timeout)
-
-        while voice_client is not None:
-            break
-        else:
-            terminate()
+async def play():
+    # play_first(interaction.guild.voice_client)
+    pass
 
 
 async def show_queue(interaction):
@@ -250,3 +235,52 @@ async def show_song_info(interaction):
         info_embed.set_image(url=SONG_QUEUE[0]["thumbnail"])
 
     await interaction.response.send_message(embed=info_embed, ephemeral=True)
+
+
+async def terminate():
+    global voice_client
+    global voice_channel
+
+    clean_files()
+
+    if voice_client is not None:
+        await voice_client.disconnect()
+
+    voice_channel = None
+    voice_client = None
+
+    if player is not None:
+        await player.delete()
+
+
+class PlayerPanel(discord.ui.View):
+    def __init__(self) -> None:
+        super().__init__(timeout=None)
+
+    @discord.ui.button(
+        custom_id="stop_btn",
+        label="",
+        row=0,
+        style=discord.ButtonStyle.primary,
+        emoji="⏹️"
+    )
+    async def stop(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        await interaction.response.edit_message(content="")
+        await terminate()
+
+    @discord.ui.button(
+        custom_id="skip_btn",
+        label="",
+        row=0,
+        style=discord.ButtonStyle.primary,
+        emoji="⏩"
+    )
+    async def skip(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        global SONG_QUEUE
+        global player
+        global voice_client
+        global voice_channel
+
+        await interaction.response.edit_message(content="")
+
+        # ToDo
