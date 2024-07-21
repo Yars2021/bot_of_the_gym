@@ -1,5 +1,6 @@
 # Для сисадмина
 ### Добавил библиотеку validators (pip install validators)
+### Основной файл теперь main.py, а не bot.py
 ### Изменил формат конфига (который .bot_config):
 ```json
 {
