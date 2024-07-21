@@ -1,3 +1,4 @@
+import asyncio
 import discord
 import os
 import yt_dlp
@@ -5,7 +6,7 @@ import yt_dlp
 
 MUSIC_ROOT = os.path.dirname(__file__)
 
-MUSIC_DIR = "yt"
+MUSIC_DIR = "yt_sources"
 
 FFMPEG_OPTIONS = {
     "options": "-vn"
@@ -76,7 +77,7 @@ def fetch_header_yt(url):
     except Exception as e:
         print(f"Ошибка поиска (анализ имен): {e}")
 
-        return -1, []
+        return -1, [e]
 
 
 def fetch_files_yt(url):
@@ -112,6 +113,7 @@ def pop_and_continue():
     global IS_PLAYING
     global SKIP_FLAG
     global SONG_QUEUE
+    global voice_client
 
     IS_PLAYING = False
 
@@ -124,10 +126,8 @@ def pop_and_continue():
 
     SKIP_FLAG = False
 
-    if len(SONG_QUEUE) <= 0:
-        clean_files()
-
-    play()
+    if len(SONG_QUEUE) > 0:
+        play()
 
 
 def play():
@@ -157,23 +157,35 @@ async def join_channel(interaction):
         await voice_client.move_to(voice_channel)
 
 
+async def leave_channel():
+    global voice_client
+
+    while voice_client is not None and voice_client.is_playing():
+        await asyncio.sleep(1)
+
+    await asyncio.sleep(5)
+
+    if voice_client is not None:
+        await voice_client.disconnect()
+
+
 async def find(interaction, request: str):
     original_response = await interaction.original_response()
 
-    header_code, titles = fetch_header_yt(request)
+    header_code, search_result = fetch_header_yt(request)
 
     if header_code != 0:
         await original_response.edit(content="", embed=discord.Embed(
-            description="По запросу ничего не найдено",
+            description="Ошибка поиска: " + str(search_result[0]),
             colour=0xf50000))
     else:
-        if len(titles) == 1:
-            queued = titles[0]
+        if len(search_result) == 1:
+            queued = search_result[0]
         else:
             queued = ""
 
-            for index in range(len(titles)):
-                queued += str(index + 1) + ". " + titles[index] + "\n"
+            for index in range(len(search_result)):
+                queued += str(index + 1) + ". " + search_result[index] + "\n"
 
         await original_response.edit(content="", embed=discord.Embed(
             title="Добавляю в очередь",
@@ -269,7 +281,22 @@ async def update_channel(channel):
     global voice_channel
 
     if voice_client is not None and channel is not None:
+        voice_channel = channel
         await voice_client.move_to(channel)
+
+
+async def find_and_play(interaction, request):
+    global IS_PLAYING
+
+    header_code = await find(interaction, request)
+
+    if header_code == 0:
+        await load(interaction, request)
+
+        if not IS_PLAYING:
+            await join_channel(interaction)
+            play()
+            await leave_channel()
 
 
 class PlayerPanel(discord.ui.View):

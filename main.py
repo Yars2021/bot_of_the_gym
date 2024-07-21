@@ -1,18 +1,20 @@
 import discord
 from discord import app_commands
 from discord.ext import tasks
-import os
+import validators
 
+import birthday_module
 import music_module
+import notifications_module
 import size_module
 import utils
 
 ########################################################################################################################
-#  Константы
+#  константы
 ########################################################################################################################
 
 
-TOKEN, SERVER_ID, ADMIN_IDS = utils.read_config("./.bot_config")
+TOKEN, SERVER_ID, BOT_CHANNEL, ADMIN_IDS = utils.read_config("./.bot_config")
 
 intents = discord.Intents.default()
 intents.dm_messages = True
@@ -22,7 +24,7 @@ command_tree = app_commands.CommandTree(client)
 
 
 ########################################################################################################################
-#  Команды администратора
+#  администрирование
 ########################################################################################################################
 
 
@@ -45,8 +47,27 @@ async def command_update(interaction: discord.Interaction) -> None:
         await utils.update_bot(interaction)
 
 
+@command_tree.command(
+    name="patch",
+    description="Отобразить последние изменения",
+    guild=discord.Object(id=SERVER_ID)
+)
+async def command_update(interaction: discord.Interaction) -> None:
+    global ADMIN_IDS
+    global BOT_CHANNEL
+    global client
+
+    if str(interaction.user.id) in ADMIN_IDS:
+        await interaction.response.send_message("Изменения:", delete_after=utils.MESSAGE_TIMER[0])
+        await utils.show_patchonote(client, BOT_CHANNEL)
+    else:
+        await interaction.response.send_message("Недостаточно прав",
+                                                ephemeral=True,
+                                                delete_after=utils.MESSAGE_TIMER[1])
+
+
 ########################################################################################################################
-#  Команды size_mod
+#  size_mod
 ########################################################################################################################
 
 
@@ -81,13 +102,13 @@ async def command_get_stats(interaction: discord.Interaction) -> None:
     global client
 
     title, table = await size_module.get_stats(client.get_guild(int(SERVER_ID)), interaction.created_at)
-    stats_embed = discord.Embed(title=title, description=table, colour=0xf5e000)
+    stats_embed = discord.Embed(title=title, description=table, colour=0xb85300)
 
     await interaction.response.send_message(embed=stats_embed, delete_after=utils.MESSAGE_TIMER[2])
 
 
 ########################################################################################################################
-#  Команды music_mod
+#  music_mod
 ########################################################################################################################
 
 
@@ -103,29 +124,27 @@ async def command_play(interaction: discord.Interaction, request: str) -> None:
             colour=0xf50000), ephemeral=True)
     else:
         await interaction.response.send_message("Ищу... Это может занять некоторе время")
-
-        header_code = await music_module.find(interaction, request)
-
-        if header_code == 0:
-            await music_module.load(interaction, request)
-            await music_module.join_channel(interaction)
-
-            music_module.play()
+        await music_module.find_and_play(interaction, request)
 
 
-# @command_tree.command(
-#     name="rplay",
-#     description="music_mod, ♂Играть♂ по названию (YouTube)",
-#     guild=discord.Object(id=SERVER_ID)
-# )
-# async def command_rplay(interaction: discord.Interaction, request: str) -> None:
-#     global SERVER_ID
-#
-#     await interaction.response.send_message("♂Ищу♂...", delete_after=utils.MESSAGE_TIMER[0])
-#     await music_module.find_and_queue(interaction, request + " right version")
-#
-#     await music_module.listen_activity(client.voice_clients, 10)
-#     await music_module.check_voice(interaction.guild.voice_client, 5)
+@command_tree.command(
+    name="right_play",
+    description="music_mod, ♂Играть♂ по названию (YouTube)",
+    guild=discord.Object(id=SERVER_ID)
+)
+async def command_right_play(interaction: discord.Interaction, request: str) -> None:
+    if interaction.user.voice is None or interaction.user.voice.channel is None:
+        await interaction.response.send_message(embed=discord.Embed(
+            description="Для использования нужно находиться в голосовом канале",
+            colour=0xf50000), ephemeral=True)
+    else:
+        if not validators.url(request):
+            await interaction.response.send_message("Ищу... Это может занять некоторе время")
+            await music_module.find_and_play(interaction, request + " right version")
+        else:
+            await interaction.response.send_message(embed=discord.Embed(
+                description="Эта команда не может искать по ссылке",
+                colour=0xf50000), ephemeral=True)
 
 
 @command_tree.command(
@@ -158,19 +177,82 @@ async def on_voice_state_update(member, before, after):
 
 
 ########################################################################################################################
-#  Инициализация
+#  notifications_mod
+########################################################################################################################
+
+
+@command_tree.command(
+    name="notify",
+    description="notifications_mod, Добавить напоминание",
+    guild=discord.Object(id=SERVER_ID)
+)
+async def command_notify(interaction: discord.Interaction, timezone: int, day: int, month: int, year: int,
+                         hours: int, minutes: int, text: str) -> None:
+    if timezone > 12 or timezone < -12:
+        await interaction.response.send_message(embed=discord.Embed(
+            description="Параметр timezone показывает часовой пояс относительно времени UTC.\n"
+                        "**-12 <= timezone <= 12**",
+            colour=0xf50000), ephemeral=True)
+    else:
+        code, first, second = notifications_module.form_date_and_time(timezone, day, month, year, hours, minutes)
+
+        if code == "error":
+            await interaction.response.send_message(embed=discord.Embed(
+                description=first + second,
+                colour=0xf50000), ephemeral=True)
+        else:
+            notifications_module.create_notification(interaction.user.id, first, second, text)
+
+            await interaction.response.send_message(embed=discord.Embed(
+                description="Уведомление успешно создано",
+                colour=0x00b0f4), ephemeral=True)
+
+
+@tasks.loop(seconds=30)
+async def notifications_loop():
+    global client
+
+    await notifications_module.check_notifications(client)
+
+
+@tasks.loop(hours=24)
+async def notifications_cleanup_loop():
+    notifications_module.clean_files()
+
+
+########################################################################################################################
+#  birthday_mod
+########################################################################################################################
+
+
+@tasks.loop(hours=24)
+async def birthday_loop():
+    global SERVER_ID
+    global BOT_CHANNEL
+    global client
+
+    birthday_module.extract_data()
+    await birthday_module.iterate(client.get_channel(int(BOT_CHANNEL)), client.get_guild(int(SERVER_ID)))
+
+
+########################################################################################################################
+#  инициализация
 ########################################################################################################################
 
 
 @client.event
 async def on_ready():
+    global BOT_CHANNEL
     global client
     global command_tree
 
     size_module.init()
+    notifications_loop.start()
+    notifications_cleanup_loop.start()
+    birthday_loop.start()
 
     await command_tree.sync(guild=discord.Object(id=SERVER_ID))
-    await utils.show_patchonote(client)
+    await utils.show_update_info(client, BOT_CHANNEL)
 
     print("Bot is up!")
 

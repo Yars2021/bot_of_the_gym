@@ -18,23 +18,26 @@ def read_config(path):
 
     config_file.close()
 
-    return config["token"], config["server"], config["admins"]
+    return config["token"], config["server"], config["channel"], config["admins"]
 
 
-async def show_patchonote(client):
+async def show_patchonote(client, channel):
+    with open("./PATCHNOTE.md", "r", encoding="utf-8") as patch_note:
+        lines = patch_note.readlines()
+
+    patch_note.close()
+
+    description = ""
+
+    for i in range(1, len(lines)):
+        description += lines[i] + "\n"
+
+    await client.get_channel(int(channel)).send(embed=Embed(title=lines[0], description=description))
+
+
+async def show_update_info(client, channel):
     if os.path.exists(UPDATE_FLAG_PATH):
-        with open("./PATCHNOTE.md", "r", encoding="utf-8") as patch_note:
-            lines = patch_note.readlines()
-
-        patch_note.close()
-
-        description = ""
-
-        for i in range(1, len(lines)):
-            description += lines[i] + "\n"
-
-        await client.get_channel(1264218377879162954).send(embed=Embed(title=lines[0], description=description))
-
+        await show_patchonote(client, channel)
         os.remove(UPDATE_FLAG_PATH)
 
 
