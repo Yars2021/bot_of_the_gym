@@ -48,7 +48,7 @@ async def iterate(channel, guild):
     async for member in members:
         for user in BIRTHDAYS:
             if user == str(member.id):
-                [day, month] = BIRTHDAYS[user]
+                [day, month, preferences] = BIRTHDAYS[user]
 
                 if day == current_day and month == current_month:
                     color = randint(0, 16777215)
