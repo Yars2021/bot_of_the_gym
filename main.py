@@ -232,7 +232,7 @@ async def notifications_cleanup_loop():
     description="birthday_mod, Добавить данные о дне рождения",
     guild=discord.Object(id=SERVER_ID)
 )
-async def command_birthday(interaction: discord.Interaction, user_id: int, day: int, month: int, pref: str) -> None:
+async def command_birthday(interaction: discord.Interaction, user_id: str, day: int, month: int, pref: str) -> None:
     global ADMIN_IDS
 
     if str(interaction.user.id) not in ADMIN_IDS:
