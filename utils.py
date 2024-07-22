@@ -57,7 +57,7 @@ async def update_bot(interaction):
 
 def check_date(day, month):
     try:
-        datetime.datetime(datetime.utcnow().date().year, month, day)
+        datetime.datetime(datetime.datetime.utcnow().date().year, month, day)
         return True
     except Exception as e:
         print(e)
