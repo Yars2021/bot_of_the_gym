@@ -1,4 +1,5 @@
 import ast
+import datetime
 import os.path
 import subprocess
 import time
@@ -53,3 +54,12 @@ async def update_bot(interaction):
         quit(0)
     except Exception as e:
         await interaction.followup.send(f"При обновлении произошла ошибка: {e}", ephemeral=True)
+
+
+def check_date(day, month):
+    try:
+        datetime.datetime(datetime.utcnow().date().year, month, day)
+        return True
+    except Exception as e:
+        print(e)
+        return False

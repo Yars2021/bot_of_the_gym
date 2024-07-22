@@ -52,18 +52,20 @@ async def command_update(interaction: discord.Interaction) -> None:
     description="Отобразить последние изменения",
     guild=discord.Object(id=SERVER_ID)
 )
-async def command_update(interaction: discord.Interaction) -> None:
+async def command_patch(interaction: discord.Interaction) -> None:
     global ADMIN_IDS
     global BOT_CHANNEL
     global client
 
-    if str(interaction.user.id) in ADMIN_IDS:
-        await interaction.response.send_message("Изменения:", delete_after=utils.MESSAGE_TIMER[0])
-        await utils.show_patchonote(client, BOT_CHANNEL)
-    else:
+    if str(interaction.user.id) not in ADMIN_IDS:
         await interaction.response.send_message("Недостаточно прав",
                                                 ephemeral=True,
                                                 delete_after=utils.MESSAGE_TIMER[1])
+    else:
+        await interaction.response.send_message("Загружаю данные...",
+                                                delete_after=utils.MESSAGE_TIMER[0],
+                                                ephemeral=True)
+        await utils.show_patchonote(client, BOT_CHANNEL)
 
 
 ########################################################################################################################
@@ -204,7 +206,7 @@ async def command_notify(interaction: discord.Interaction, timezone: int, day: i
             notifications_module.create_notification(interaction.user.id, first, second, text)
 
             await interaction.response.send_message(embed=discord.Embed(
-                description="Уведомление успешно создано",
+                description="Напоминание успешно создано",
                 colour=0x00b0f4), ephemeral=True)
 
 
@@ -223,6 +225,32 @@ async def notifications_cleanup_loop():
 ########################################################################################################################
 #  birthday_mod
 ########################################################################################################################
+
+
+@command_tree.command(
+    name="birthday",
+    description="birthday_mod, Добавить данные о дне рождения",
+    guild=discord.Object(id=SERVER_ID)
+)
+async def command_birthday(interaction: discord.Interaction, user_id: int, day: int, month: int, pref: str) -> None:
+    global ADMIN_IDS
+
+    if str(interaction.user.id) not in ADMIN_IDS:
+        await interaction.response.send_message("Недостаточно прав",
+                                                ephemeral=True,
+                                                delete_after=utils.MESSAGE_TIMER[1])
+    else:
+        if not utils.check_date(day, month):
+            await interaction.response.send_message(embed=discord.Embed(
+                description="Ошибка в дате",
+                colour=0xf50000), ephemeral=True)
+        else:
+            birthday_module.add_birthday(user_id, day, month, pref)
+            birthday_module.extract_data()
+
+            await interaction.response.send_message(embed=discord.Embed(
+                description="День рождения успешно добавлен",
+                colour=0x00b0f4), ephemeral=True)
 
 
 @tasks.loop(hours=24)
