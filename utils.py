@@ -3,6 +3,7 @@ import datetime
 import os.path
 import subprocess
 import time
+import sys
 
 from discord import Embed
 
@@ -48,9 +49,9 @@ async def update_bot(interaction):
         with open("./.updated", "w", encoding="utf-8") as flag_file:
             flag_file.close()
 
-        os.system(f"echo \"python3 ./main.py\" | at -t {datetime.fromtimestamp(time.time()) + timedelta(seconds=10)}")
+        os.system(f"echo \"python3 ./main.py\" | at -t {datetime.datetime.fromtimestamp(time.time()) + timedelta(seconds=10)}")
 
-        quit(0)
+        sys.exit()
     except Exception as e:
         await interaction.followup.send(f"При обновлении произошла ошибка: {e}", ephemeral=True)
 
