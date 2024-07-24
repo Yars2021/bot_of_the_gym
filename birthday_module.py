@@ -37,6 +37,29 @@ def add_birthday(user_id, day, month, preferences):
     f.close()
 
 
+async def show_table(guild):
+    global FILE
+    global BIRTHDAYS
+
+    extract_data()
+
+    table = ""
+
+    members = guild.fetch_members(limit=None)
+
+    users = {}
+
+    async for member in members:
+        users[str(member.id)] = member.nick
+
+    for user in users:
+        for birthday in BIRTHDAYS:
+            if user == birthday:
+                table += user + ": " + BIRTHDAYS[birthday][0] + "." + BIRTHDAYS[birthday][1]
+
+    return table
+
+
 async def iterate(channel, guild):
     global BIRTHDAYS
 

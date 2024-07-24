@@ -1,5 +1,5 @@
 # Для сисадмина
-### Добавил библиотеку validators (pip install validators)
+### Добавил библиотеки bs4, validators, youtube_search
 ### Основной файл теперь main.py, а не bot.py
 ### Изменил формат конфига (который .bot_config):
 ```json

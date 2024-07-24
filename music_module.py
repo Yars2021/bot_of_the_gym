@@ -1,7 +1,11 @@
 import asyncio
 import discord
 import os
+import requests
 import yt_dlp
+
+from bs4 import BeautifulSoup
+from youtube_search import YoutubeSearch
 
 
 MUSIC_ROOT = os.path.dirname(__file__)
@@ -167,6 +171,36 @@ async def leave_channel():
 
     if voice_client is not None:
         await voice_client.disconnect()
+
+
+def process_spotify_link(link):
+    try:
+        response = requests.get(link)
+        soup = BeautifulSoup(response.text, "lxml")
+
+        song = soup.find("meta", {"property": "og:title"})["content"]
+        artist_soup = soup.find("meta", {"name": "music:musician"})
+
+        if artist_soup is None:
+            artist_link = ""
+        else:
+            artist_link = artist_soup["content"]
+
+        artist_page = BeautifulSoup(requests.get(artist_link).text, "lxml")
+        artist = artist_page.find("meta", property="og:title")["content"]
+
+        song_name = str(song + " " + artist).replace(" ", "+")
+
+        yt_search_url = "https://www.youtube.com/results?search_query=" + song_name
+
+        return "ok", yt_search_url
+
+    except Exception as e:
+        return "error", e
+
+
+def find_in_yt(yt_search_link):
+    return "https://www.youtube.com/" + list(YoutubeSearch(yt_search_link, max_results=1).to_dict())[-1]["url_suffix"]
 
 
 async def find(interaction, request: str):

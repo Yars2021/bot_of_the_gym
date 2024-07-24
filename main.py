@@ -126,7 +126,21 @@ async def command_play(interaction: discord.Interaction, request: str) -> None:
             colour=0xf50000), ephemeral=True)
     else:
         await interaction.response.send_message("Ищу... Это может занять некоторе время")
-        await music_module.find_and_play(interaction, request)
+
+        if validators.url(request) and request.find("https://open.spotify.com") != -1:
+            code, yt_search_link = music_module.process_spotify_link(request)
+
+            if code == "ok":
+                request = music_module.find_in_yt(yt_search_link)
+            else:
+                request = ""
+
+                await interaction.response.send_message(embed=discord.Embed(
+                    description=f"Ошибка поиска по ссылке Spotify: {yt_search_link}",
+                    colour=0xf50000), ephemeral=True)
+
+        if len(request) > 0:
+            await music_module.find_and_play(interaction, request)
 
 
 @command_tree.command(
@@ -251,6 +265,25 @@ async def command_birthday(interaction: discord.Interaction, user_id: str, day: 
             await interaction.response.send_message(embed=discord.Embed(
                 description="День рождения успешно добавлен",
                 colour=0x00b0f4), ephemeral=True)
+
+
+@command_tree.command(
+    name="birthday_table",
+    description="birthday_mod, Просмотреть список зарегистрированных дней рождения",
+    guild=discord.Object(id=SERVER_ID)
+)
+async def command_birthday_table(interaction: discord.Interactionr) -> None:
+    global ADMIN_IDS
+
+    if str(interaction.user.id) not in ADMIN_IDS:
+        await interaction.response.send_message("Недостаточно прав",
+                                                ephemeral=True,
+                                                delete_after=utils.MESSAGE_TIMER[1])
+    else:
+        await interaction.response.send_message(embed=discord.Embed(
+            title="Таблица дней рождения",
+            description=await birthday_module.show_table(client.get_guild(int(SERVER_ID))),
+            colour=0x00b0f4), ephemeral=True)
 
 
 @tasks.loop(hours=24)

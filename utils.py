@@ -49,7 +49,8 @@ async def update_bot(interaction):
         with open("./.updated", "w", encoding="utf-8") as flag_file:
             flag_file.close()
 
-        os.system(f"echo \"python3 ./main.py\" | at -t {datetime.datetime.fromtimestamp(time.time()) + timedelta(seconds=10)}")
+        os.system(f"echo \"python3 ./main.py\" | at -t"
+                  f"{datetime.datetime.fromtimestamp(time.time()) + datetime.timedelta(seconds=10)}")
 
         sys.exit()
     except Exception as e:
