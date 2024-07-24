@@ -116,7 +116,7 @@ async def command_get_stats(interaction: discord.Interaction) -> None:
 
 @command_tree.command(
     name="play",
-    description="music_mod, Играть по ссылке или названию (YouTube)",
+    description="music_mod, Играть по ссылке или названию",
     guild=discord.Object(id=SERVER_ID)
 )
 async def command_play(interaction: discord.Interaction, request: str) -> None:
@@ -128,15 +128,15 @@ async def command_play(interaction: discord.Interaction, request: str) -> None:
         await interaction.response.send_message("Ищу... Это может занять некоторе время")
 
         if validators.url(request) and request.find("https://open.spotify.com") != -1:
-            code, yt_search_link = music_module.process_spotify_link(request)
+            code, conversion_result = music_module.process_spotify_link(request)
 
             if code == "ok":
-                request = music_module.find_in_yt(yt_search_link)
+                request = conversion_result
             else:
                 request = ""
 
-                await interaction.response.send_message(embed=discord.Embed(
-                    description=f"Ошибка поиска по ссылке Spotify: {yt_search_link}",
+                await interaction.response.edit_message(embed=discord.Embed(
+                    description=f"Ошибка поиска по ссылке Spotify: {conversion_result}",
                     colour=0xf50000), ephemeral=True)
 
         if len(request) > 0:
@@ -272,7 +272,7 @@ async def command_birthday(interaction: discord.Interaction, user_id: str, day: 
     description="birthday_mod, Просмотреть список зарегистрированных дней рождения",
     guild=discord.Object(id=SERVER_ID)
 )
-async def command_birthday_table(interaction: discord.Interactionr) -> None:
+async def command_birthday_table(interaction: discord.Interaction) -> None:
     global ADMIN_IDS
 
     if str(interaction.user.id) not in ADMIN_IDS:

@@ -5,7 +5,6 @@ import requests
 import yt_dlp
 
 from bs4 import BeautifulSoup
-from youtube_search import YoutubeSearch
 
 
 MUSIC_ROOT = os.path.dirname(__file__)
@@ -187,20 +186,14 @@ def process_spotify_link(link):
             artist_link = artist_soup["content"]
 
         artist_page = BeautifulSoup(requests.get(artist_link).text, "lxml")
-        artist = artist_page.find("meta", property="og:title")["content"]
+        artist = artist_page.find("meta", {"property": "og:title"})["content"]
 
-        song_name = str(song + " " + artist).replace(" ", "+")
+        full_song_name = str(song + " " + artist).replace("&", "and")
 
-        yt_search_url = "https://www.youtube.com/results?search_query=" + song_name
-
-        return "ok", yt_search_url
+        return "ok", full_song_name
 
     except Exception as e:
         return "error", e
-
-
-def find_in_yt(yt_search_link):
-    return "https://www.youtube.com/" + list(YoutubeSearch(yt_search_link, max_results=1).to_dict())[-1]["url_suffix"]
 
 
 async def find(interaction, request: str):
