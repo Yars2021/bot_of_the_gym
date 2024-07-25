@@ -6,6 +6,7 @@ import os
 
 from random import randint
 
+import utils
 
 FILE = "./.birthday_table"
 
@@ -38,7 +39,6 @@ def add_birthday(user_id, day, month, preferences):
 
 
 async def show_table(guild):
-    global FILE
     global BIRTHDAYS
 
     extract_data()
@@ -52,10 +52,14 @@ async def show_table(guild):
     async for member in members:
         users[str(member.id)] = member.nick
 
+    index = 1
+
     for user in users:
         for birthday in BIRTHDAYS:
             if user == birthday:
-                table += user + ": " + BIRTHDAYS[birthday][0] + "." + BIRTHDAYS[birthday][1]
+                table += str(index) + ". " + users[user] + ": " +\
+                         BIRTHDAYS[birthday][0] + "." + BIRTHDAYS[birthday][1] + "\n"
+                index += 1
 
     return table
 
@@ -78,10 +82,11 @@ async def iterate(channel, guild):
 
                     gpt_message = ""  # ToDo integrate ChatGPT
 
-                    birthday_embed = discord.Embed(
-                        title="С днем рождения!",
-                        description="**Цифровой Борец помнит о тебе**\nНадеюсь, не только он..." + gpt_message,
-                        colour=color)
+                    birthday_embed = utils.message_embed(
+                        "С днем рождения!",
+                        "**Цифровой Борец помнит о тебе**\nНадеюсь, не только он..." + gpt_message,
+                        color
+                    )
 
                     personal_embed = discord.Embed(
                         title="Держи открытку",

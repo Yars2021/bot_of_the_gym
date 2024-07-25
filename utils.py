@@ -13,6 +13,49 @@ UPDATE_FLAG_PATH = "./.updated"
 MESSAGE_TIMER = [0.0, 15.0, 60.0, 120.0]
 
 
+def message_embed(title, text, color):
+    if len(title) <= 0:
+        return Embed(
+            description=text,
+            colour=color
+        )
+    elif len(text) <= 0:
+        return Embed(
+            title=title,
+            colour=color
+        )
+    else:
+        return Embed(
+            title=title,
+            description=text,
+            colour=color
+        )
+
+
+def error_embed(text):
+    return message_embed("", text, 0xf50000)
+
+
+def header_error_embed(title):
+    return message_embed(title, "", 0xf50000)
+
+
+def info_embed(text):
+    return message_embed("", text, 0x00b0f4)
+
+
+def full_info_embed(title, text):
+    return message_embed(title, text, 0x00b0f4)
+
+
+def music_cover_embed(title):
+    return message_embed(title, "", 0x7a00f5)
+
+
+def full_music_cover_embed(title, text):
+    return message_embed(title, text, 0x7a00f5)
+
+
 def read_config(path):
     with open(path, "r", encoding="utf-8") as config_file:
         config = ast.literal_eval(config_file.read())
@@ -37,6 +80,8 @@ async def show_patchonote(client, channel):
 
 
 async def show_update_info(client, channel):
+    global UPDATE_FLAG_PATH
+
     if os.path.exists(UPDATE_FLAG_PATH):
         await show_patchonote(client, channel)
         os.remove(UPDATE_FLAG_PATH)

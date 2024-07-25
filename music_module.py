@@ -2,6 +2,7 @@ import asyncio
 import discord
 import os
 import requests
+import utils
 import yt_dlp
 
 from bs4 import BeautifulSoup
@@ -116,21 +117,21 @@ def pop_and_continue():
     global IS_PLAYING
     global SKIP_FLAG
     global SONG_QUEUE
-    global voice_client
 
     IS_PLAYING = False
 
-    last_song = SONG_QUEUE.pop(0)
-
-    if IS_LOOPED and not SKIP_FLAG:
-        SONG_QUEUE.append(last_song)
-    else:
-        remove_file(last_song["filename"])
-
-    SKIP_FLAG = False
-
     if len(SONG_QUEUE) > 0:
-        play()
+        last_song = SONG_QUEUE.pop(0)
+
+        if IS_LOOPED and not SKIP_FLAG:
+            SONG_QUEUE.append(last_song)
+        else:
+            remove_file(last_song["filename"])
+
+        SKIP_FLAG = False
+
+        if len(SONG_QUEUE) > 0:
+            play()
 
 
 def play():
@@ -188,9 +189,7 @@ def process_spotify_link(link):
         artist_page = BeautifulSoup(requests.get(artist_link).text, "lxml")
         artist = artist_page.find("meta", {"property": "og:title"})["content"]
 
-        full_song_name = str(song + " " + artist).replace("&", "and")
-
-        return "ok", full_song_name
+        return "ok", str(song + " " + artist).replace("&", "and")
 
     except Exception as e:
         return "error", e
@@ -202,9 +201,7 @@ async def find(interaction, request: str):
     header_code, search_result = fetch_header_yt(request)
 
     if header_code != 0:
-        await original_response.edit(content="", embed=discord.Embed(
-            description="Ошибка поиска: " + str(search_result[0]),
-            colour=0xf50000))
+        await original_response.edit(content="", embed=utils.error_embed("Ошибка поиска: " + str(search_result[0])))
     else:
         if len(search_result) == 1:
             queued = search_result[0]
@@ -214,31 +211,30 @@ async def find(interaction, request: str):
             for index in range(len(search_result)):
                 queued += str(index + 1) + ". " + search_result[index] + "\n"
 
-        await original_response.edit(content="", embed=discord.Embed(
-            title="Добавляю в очередь",
-            description=queued,
-            colour=0x00b0f4))
+        await original_response.edit(content="", embed=utils.full_info_embed(
+            "Добавляю в очередь",
+            queued
+        ))
 
     return header_code
 
 
 async def reset_player(interaction):
-    global IS_LOOPED
+    global SONG_QUEUE
     global player
 
     if player is not None:
         await player.delete()
 
     if len(SONG_QUEUE) > 0:
-        player = await interaction.channel.send(view=PlayerPanel(), embed=discord.Embed(
-            title="Сейчас играет",
-            description=SONG_QUEUE[0]["title"],
-            colour=0x7a00f5))
+        player = await interaction.channel.send(view=PlayerPanel(), embed=utils.full_music_cover_embed(
+            "Сейчас играет",
+            SONG_QUEUE[0]["title"]
+        ))
 
 
 async def load(interaction, request: str):
     global SONG_QUEUE
-    global player
 
     for entry in fetch_files_yt(request):
         SONG_QUEUE.append(entry)
@@ -246,37 +242,35 @@ async def load(interaction, request: str):
     if len(SONG_QUEUE) > 0:
         await reset_player(interaction)
     else:
-        await interaction.channel.send(embed=discord.Embed(
-            description="Ошибка скачивания",
-            colour=0xf50000))
+        await interaction.channel.send(embed=utils.error_embed("Ошибка скачивания"))
 
 
 async def show_queue(interaction):
     global SONG_QUEUE
 
     if len(SONG_QUEUE) <= 0:
-        info_embed = discord.Embed(title="Очередь пуста", colour=0xf50000)
+        cover_embed = utils.header_error_embed("Очередь пуста")
     else:
         message = ""
 
         for index in range(len(SONG_QUEUE)):
             message += (str(index + 1) + ". " + SONG_QUEUE[index]["title"] + "\n")
 
-        info_embed = discord.Embed(title="Очередь музыки", description=message, colour=0x7a00f5)
+        cover_embed = utils.message_embed("Очередь музыки", message, 0x7a00f5)
 
-    await interaction.response.send_message(embed=info_embed, ephemeral=True)
+    await interaction.response.send_message(embed=cover_embed, ephemeral=True)
 
 
 async def show_song_info(interaction):
     global SONG_QUEUE
 
     if len(SONG_QUEUE) <= 0:
-        info_embed = discord.Embed(title="Очередь пуста", colour=0xf50000)
+        cover_embed = utils.header_error_embed("Очередь пуста")
     else:
-        info_embed = discord.Embed(title=SONG_QUEUE[0]["title"], colour=0x7a00f5)
-        info_embed.set_image(url=SONG_QUEUE[0]["thumbnail"])
+        cover_embed = utils.music_cover_embed(SONG_QUEUE[0]["title"])
+        cover_embed.set_image(url=SONG_QUEUE[0]["thumbnail"])
 
-    await interaction.response.send_message(embed=info_embed, ephemeral=True)
+    await interaction.response.send_message(embed=cover_embed, ephemeral=True)
 
 
 async def terminate():
@@ -355,7 +349,6 @@ class PlayerPanel(discord.ui.View):
     async def skip(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         global SKIP_FLAG
         global SONG_QUEUE
-        global player
         global voice_client
 
         await interaction.response.edit_message(content="")

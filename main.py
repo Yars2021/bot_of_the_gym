@@ -7,6 +7,7 @@ import birthday_module
 import music_module
 import notifications_module
 import size_module
+import sound_module
 import utils
 
 ########################################################################################################################
@@ -37,11 +38,11 @@ async def command_update(interaction: discord.Interaction) -> None:
     global ADMIN_IDS
 
     if str(interaction.user.id) not in ADMIN_IDS:
-        await interaction.response.send_message("Недостаточно прав",
+        await interaction.response.send_message(embed=utils.error_embed("Недостаточно прав"),
                                                 ephemeral=True,
                                                 delete_after=utils.MESSAGE_TIMER[1])
     else:
-        await interaction.response.send_message("Обновление...",
+        await interaction.response.send_message(embed=utils.info_embed("Обновление..."),
                                                 ephemeral=True,
                                                 delete_after=utils.MESSAGE_TIMER[0])
         await utils.update_bot(interaction)
@@ -58,13 +59,13 @@ async def command_patch(interaction: discord.Interaction) -> None:
     global client
 
     if str(interaction.user.id) not in ADMIN_IDS:
-        await interaction.response.send_message("Недостаточно прав",
+        await interaction.response.send_message(embed=utils.error_embed("Недостаточно прав"),
                                                 ephemeral=True,
                                                 delete_after=utils.MESSAGE_TIMER[1])
     else:
-        await interaction.response.send_message("Загружаю данные...",
-                                                delete_after=utils.MESSAGE_TIMER[0],
-                                                ephemeral=True)
+        await interaction.response.send_message(embed=utils.info_embed("Загружаю данные..."),
+                                                ephemeral=True,
+                                                delete_after=utils.MESSAGE_TIMER[0])
         await utils.show_patchonote(client, BOT_CHANNEL)
 
 
@@ -81,7 +82,7 @@ async def command_patch(interaction: discord.Interaction) -> None:
 async def command_get_size(interaction: discord.Interaction) -> None:
     await interaction.response.send_message(size_module.get_size(
         str(interaction.user.id),
-        interaction.created_at), delete_after=utils.MESSAGE_TIMER[3])
+        interaction.created_at), delete_after=utils.MESSAGE_TIMER[2])
 
 
 @command_tree.command(
@@ -91,7 +92,7 @@ async def command_get_size(interaction: discord.Interaction) -> None:
 )
 async def command_get_sum(interaction: discord.Interaction) -> None:
     await interaction.response.send_message(size_module.get_sum(
-        interaction.created_at), delete_after=utils.MESSAGE_TIMER[2])
+        interaction.created_at), delete_after=utils.MESSAGE_TIMER[3])
 
 
 @command_tree.command(
@@ -104,9 +105,9 @@ async def command_get_stats(interaction: discord.Interaction) -> None:
     global client
 
     title, table = await size_module.get_stats(client.get_guild(int(SERVER_ID)), interaction.created_at)
-    stats_embed = discord.Embed(title=title, description=table, colour=0xb85300)
 
-    await interaction.response.send_message(embed=stats_embed, delete_after=utils.MESSAGE_TIMER[2])
+    await interaction.response.send_message(embed=utils.message_embed(title, table, 0xb85300),
+                                            delete_after=utils.MESSAGE_TIMER[3])
 
 
 ########################################################################################################################
@@ -121,10 +122,13 @@ async def command_get_stats(interaction: discord.Interaction) -> None:
 )
 async def command_play(interaction: discord.Interaction, request: str) -> None:
     if interaction.user.voice is None or interaction.user.voice.channel is None:
-        await interaction.response.send_message(embed=discord.Embed(
-            description="Для использования нужно находиться в голосовом канале",
-            colour=0xf50000), ephemeral=True)
+        await interaction.response.send_message(
+            embed=utils.error_embed("Для использования нужно находиться в голосовом канале"),
+            ephemeral=True)
     else:
+        if sound_module.ACTIVE:
+            await sound_module.leave()
+
         await interaction.response.send_message("Ищу... Это может занять некоторе время")
 
         if validators.url(request) and request.find("https://open.spotify.com") != -1:
@@ -135,9 +139,9 @@ async def command_play(interaction: discord.Interaction, request: str) -> None:
             else:
                 request = ""
 
-                await interaction.response.edit_message(embed=discord.Embed(
-                    description=f"Ошибка поиска по ссылке Spotify: {conversion_result}",
-                    colour=0xf50000), ephemeral=True)
+                await interaction.response.edit_message(
+                    embed=utils.error_embed(f"Ошибка поиска по ссылке Spotify: {conversion_result}"),
+                    ephemeral=True)
 
         if len(request) > 0:
             await music_module.find_and_play(interaction, request)
@@ -150,17 +154,20 @@ async def command_play(interaction: discord.Interaction, request: str) -> None:
 )
 async def command_right_play(interaction: discord.Interaction, request: str) -> None:
     if interaction.user.voice is None or interaction.user.voice.channel is None:
-        await interaction.response.send_message(embed=discord.Embed(
-            description="Для использования нужно находиться в голосовом канале",
-            colour=0xf50000), ephemeral=True)
+        await interaction.response.send_message(
+            embed=utils.error_embed("Для использования нужно находиться в голосовом канале"),
+            ephemeral=True)
     else:
-        if not validators.url(request):
+        if validators.url(request):
+            await interaction.response.send_message(
+                embed=utils.error_embed("Эта команда не может искать по ссылке"),
+                ephemeral=True)
+        else:
+            if sound_module.ACTIVE:
+                await sound_module.leave()
+
             await interaction.response.send_message("Ищу... Это может занять некоторе время")
             await music_module.find_and_play(interaction, request + " right version")
-        else:
-            await interaction.response.send_message(embed=discord.Embed(
-                description="Эта команда не может искать по ссылке",
-                colour=0xf50000), ephemeral=True)
 
 
 @command_tree.command(
@@ -181,17 +188,6 @@ async def command_song(interaction: discord.Interaction) -> None:
     await music_module.show_song_info(interaction)
 
 
-@client.event
-async def on_voice_state_update(member, before, after):
-    global client
-
-    if member == client.user:
-        if after.channel is None:
-            await music_module.terminate()
-        elif before.channel is not None and after.channel != before.channel:
-            await music_module.update_channel(after.channel)
-
-
 ########################################################################################################################
 #  notifications_mod
 ########################################################################################################################
@@ -205,23 +201,23 @@ async def on_voice_state_update(member, before, after):
 async def command_notify(interaction: discord.Interaction, timezone: int, day: int, month: int, year: int,
                          hours: int, minutes: int, text: str) -> None:
     if timezone > 12 or timezone < -12:
-        await interaction.response.send_message(embed=discord.Embed(
-            description="Параметр timezone показывает часовой пояс относительно времени UTC.\n"
-                        "**-12 <= timezone <= 12**",
-            colour=0xf50000), ephemeral=True)
+        await interaction.response.send_message(
+            embed=utils.error_embed("Параметр timezone показывает часовой пояс относительно времени UTC.\n"
+                                    "**-12 <= timezone <= 12**"),
+            ephemeral=True)
     else:
         code, first, second = notifications_module.form_date_and_time(timezone, day, month, year, hours, minutes)
 
         if code == "error":
-            await interaction.response.send_message(embed=discord.Embed(
-                description=first + second,
-                colour=0xf50000), ephemeral=True)
+            await interaction.response.send_message(
+                embed=utils.error_embed(first + second),
+                ephemeral=True)
         else:
             notifications_module.create_notification(interaction.user.id, first, second, text)
 
-            await interaction.response.send_message(embed=discord.Embed(
-                description="Напоминание успешно создано",
-                colour=0x00b0f4), ephemeral=True)
+            await interaction.response.send_message(
+                embed=utils.info_embed("Напоминание успешно создано"),
+                ephemeral=True)
 
 
 @tasks.loop(seconds=30)
@@ -250,21 +246,20 @@ async def command_birthday(interaction: discord.Interaction, user_id: str, day: 
     global ADMIN_IDS
 
     if str(interaction.user.id) not in ADMIN_IDS:
-        await interaction.response.send_message("Недостаточно прав",
+        await interaction.response.send_message(embed=utils.error_embed("Недостаточно прав"),
                                                 ephemeral=True,
                                                 delete_after=utils.MESSAGE_TIMER[1])
     else:
         if not utils.check_date(day, month):
-            await interaction.response.send_message(embed=discord.Embed(
-                description="Ошибка в дате",
-                colour=0xf50000), ephemeral=True)
+            await interaction.response.send_message(embed=utils.error_embed("Ошибка в дате"),
+                                                    ephemeral=True,
+                                                    delete_after=utils.MESSAGE_TIMER[1])
         else:
             birthday_module.add_birthday(user_id, day, month, pref)
             birthday_module.extract_data()
 
-            await interaction.response.send_message(embed=discord.Embed(
-                description="День рождения успешно добавлен",
-                colour=0x00b0f4), ephemeral=True)
+            await interaction.response.send_message(embed=utils.info_embed("День рождения успешно добавлен"),
+                                                    ephemeral=True)
 
 
 @command_tree.command(
@@ -276,14 +271,14 @@ async def command_birthday_table(interaction: discord.Interaction) -> None:
     global ADMIN_IDS
 
     if str(interaction.user.id) not in ADMIN_IDS:
-        await interaction.response.send_message("Недостаточно прав",
+        await interaction.response.send_message(embed=utils.error_embed("Недостаточно прав"),
                                                 ephemeral=True,
                                                 delete_after=utils.MESSAGE_TIMER[1])
     else:
-        await interaction.response.send_message(embed=discord.Embed(
-            title="Таблица дней рождения",
-            description=await birthday_module.show_table(client.get_guild(int(SERVER_ID))),
-            colour=0x00b0f4), ephemeral=True)
+        await interaction.response.send_message(embed=utils.message_embed(
+            "Таблица дней рождения",
+            await birthday_module.show_table(client.get_guild(int(SERVER_ID))),
+            0x00b0f4), ephemeral=True)
 
 
 @tasks.loop(hours=24)
@@ -297,8 +292,44 @@ async def birthday_loop():
 
 
 ########################################################################################################################
+#  sound_mod
+########################################################################################################################
+
+
+@command_tree.command(
+    name="init_sounds",
+    description="sound_mod, Вывести интерфейс управления звуковой панелью",
+    guild=discord.Object(id=SERVER_ID)
+)
+async def command_birthday_table(interaction: discord.Interaction) -> None:
+    global ADMIN_IDS
+
+    if str(interaction.user.id) in ADMIN_IDS:
+        await interaction.response.send_message(view=sound_module.ButtonPanel())
+        await interaction.followup.send(view=sound_module.ControlPanel())
+    else:
+        await interaction.response.send_message(embed=utils.error_embed("Недостаточно прав"),
+                                                ephemeral=True,
+                                                delete_after=utils.MESSAGE_TIMER[1])
+
+
+########################################################################################################################
 #  инициализация
 ########################################################################################################################
+
+
+@client.event
+async def on_voice_state_update(member, before, after):
+    global client
+
+    if member == client.user:
+        if after.channel is None:
+            if sound_module.ACTIVE:
+                await sound_module.leave()
+            else:
+                await music_module.terminate()
+        elif before.channel is not None and after.channel != before.channel:
+            await music_module.update_channel(after.channel)
 
 
 @client.event

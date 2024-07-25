@@ -1,9 +1,9 @@
 import ast
 import datetime
-import discord
 import json
 import os
 
+import utils
 
 PATH = "./notifications/"
 
@@ -68,9 +68,10 @@ async def check_notifications(client):
                 new_notifications.append(notification)
             else:
                 user = await client.fetch_user(int(notification["user"]))
-                await user.send(embed=discord.Embed(
-                    title="Напоминание",
-                    description="**" + notification["text"] + "**"
+
+                await user.send(embed=utils.full_info_embed(
+                    "Напоминание",
+                    "**" + notification["text"] + "**"
                 ))
 
                 with open(HISTORY, "a", encoding="utf-8") as f:
