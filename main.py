@@ -297,8 +297,8 @@ async def birthday_loop():
 
 
 @command_tree.command(
-    name="init_sounds",
-    description="sound_mod, Вывести интерфейс управления звуковой панелью",
+    name="controls",
+    description="sound_mod, Вывести интерфейс управления",
     guild=discord.Object(id=SERVER_ID)
 )
 async def command_birthday_table(interaction: discord.Interaction) -> None:
