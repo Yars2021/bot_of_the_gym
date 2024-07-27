@@ -14,8 +14,6 @@ class SoundModuleCommands(commands.Cog, name="sound_cog"):
     def __init__(self, bot):
         self.bot = bot
         self.sound_module = global_vars.SOUND_FUNCTIONS
-        self.soundboardPanel = SoundboardPanel(self.sound_module)
-        self.controlPanel = ControlPanel(self.sound_module)
 
     @slash_command(
         name="tplay",
@@ -109,8 +107,8 @@ class SoundModuleCommands(commands.Cog, name="sound_cog"):
     )
     async def command_controls(self, ctx: discord.ApplicationContext) -> None:
         if str(ctx.user.id) in global_vars.ADMIN_IDS:
-            await ctx.respond(view=self.soundboardPanel)
-            await ctx.followup.send(view=self.controlPanel)
+            await ctx.respond(view=SoundboardPanel())
+            await ctx.followup.send(view=ControlPanel())
         else:
             await ctx.respond(embed=utils.error_embed("Недостаточно прав"),
                               ephemeral=True,

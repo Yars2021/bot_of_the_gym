@@ -72,12 +72,13 @@ async def show_patchonote(client, channel):
 
     patch_note.close()
 
-    description = ""
+    if len(lines) > 0:
+        description = ""
 
-    for i in range(1, len(lines)):
-        description += lines[i] + "\n"
+        for i in range(1, len(lines)):
+            description += lines[i] + "\n"
 
-    await (await client.fetch_channel(int(channel))).send(embed=Embed(title=lines[0], description=description))
+        await (await client.fetch_channel(int(channel))).send(embed=Embed(title=lines[0], description=description))
 
 
 async def show_update_info(client, channel):

@@ -1,10 +1,12 @@
 import discord
 
+from configs import global_vars
+
 
 class ControlPanel(discord.ui.View):
-    def __init__(self, sound_module) -> None:
+    def __init__(self) -> None:
         super().__init__(timeout=None)
-        self.sound_module = sound_module
+        self.sound_module = global_vars.SOUND_FUNCTIONS
 
     @discord.ui.button(
         custom_id="join_btn",

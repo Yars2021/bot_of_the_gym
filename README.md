@@ -1,7 +1,9 @@
 # Для сисадмина
-### Добавил библиотеки bs4, validators, youtube_search
-### Основной файл теперь main.py, а не bot.py
-### Изменил формат конфига (который .bot_config):
+### Перенес бота с discord.py на pycord
+```bash
+pip uninstall discord.py
+pip install py-cord
+```
 ```json
 {
   "token": "Токен бота",
@@ -15,4 +17,3 @@
   ]
 }
 ```
-### Значения полей конфига кидал в ЛС

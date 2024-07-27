@@ -8,63 +8,8 @@ import utils
 import yt_dlp
 
 from bs4 import BeautifulSoup
+from panels.PlayerPanel import Player
 from threading import Thread
-
-
-class Player(discord.ui.View):
-    def __init__(self, sound_module) -> None:
-        super().__init__(timeout=None)
-        self.sound_module = sound_module
-
-    @discord.ui.button(
-        custom_id="stop_btn",
-        label="",
-        row=0,
-        style=discord.ButtonStyle.primary,
-        emoji="⏹️"
-    )
-    async def stop(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
-        if self.sound_module.voice_client is not None:
-            await self.sound_module.voice_client.disconnect()
-
-        await interaction.edit(content="")
-
-    @discord.ui.button(
-        custom_id="skip_btn",
-        label="",
-        row=0,
-        style=discord.ButtonStyle.primary,
-        emoji="⏩"
-    )
-    async def skip(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
-        if self.sound_module.voice_client is not None:
-            self.sound_module.voice_client.stop()
-
-        if len(self.sound_module.song_queue) > 1:
-            await self.sound_module.reset_player(interaction)
-            self.sound_module.play()
-        else:
-            if self.sound_module.voice_client is not None:
-                await self.sound_module.voice_client.disconnect()
-
-        await interaction.edit(content="")
-
-    @discord.ui.button(
-        custom_id="loop_btn",
-        label="",
-        row=0,
-        style=discord.ButtonStyle.secondary,
-        emoji="🔁"
-    )
-    async def loop(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
-        self.sound_module.is_looped = not self.sound_module.is_looped
-
-        if self.sound_module.is_looped:
-            button.style = discord.ButtonStyle.primary
-        else:
-            button.style = discord.ButtonStyle.secondary
-
-        await interaction.edit(content="", view=self)
 
 
 class SoundModule:
@@ -109,8 +54,6 @@ class SoundModule:
 
         self.recognizer = speech_recognition.Recognizer()
         self.ytdl = yt_dlp.YoutubeDL(self.ytdl_options)
-
-        # self.playerPanel = Player(self)
 
     @staticmethod
     def process_spotify_link(link):
@@ -180,7 +123,7 @@ class SoundModule:
 
     def clean_files(self):
         if os.path.exists(os.path.join(self.music_root, self.music_dir)):
-            os.system("rm -rf ./" + os.path.join(self.music_root, self.music_dir))
+            os.system("rm -rf " + os.path.join(self.music_root, self.music_dir))
 
     def remove_file(self, path):
         if os.path.exists(os.path.exists(os.path.join(self.music_root, self.music_dir) + "/" + path)):
@@ -299,7 +242,7 @@ class SoundModule:
             await self.player.delete()
 
         if len(self.song_queue) > 0:
-            self.player = await ctx.channel.send(embed=utils.full_music_cover_embed(
+            self.player = await ctx.channel.send(view=Player(), embed=utils.full_music_cover_embed(
                 "Сейчас играет",
                 self.song_queue[0]["title"]
             ))
@@ -342,8 +285,6 @@ class SoundModule:
             await self.voice_client.move_to(channel)
 
     async def find_and_play(self, ctx, request):
-        print(self.music_root)
-
         header_code = await self.find(ctx, request)
 
         if header_code == 0:
