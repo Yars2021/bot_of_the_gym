@@ -1,11 +1,12 @@
+import discord
+from discord import Embed
+
 import ast
 import datetime
 import os.path
 import subprocess
 import time
 import sys
-
-from discord import Embed
 
 
 UPDATE_FLAG_PATH = "./.updated"
@@ -76,7 +77,7 @@ async def show_patchonote(client, channel):
     for i in range(1, len(lines)):
         description += lines[i] + "\n"
 
-    await client.get_channel(int(channel)).send(embed=Embed(title=lines[0], description=description))
+    await (await client.fetch_channel(int(channel))).send(embed=Embed(title=lines[0], description=description))
 
 
 async def show_update_info(client, channel):
@@ -87,7 +88,7 @@ async def show_update_info(client, channel):
         os.remove(UPDATE_FLAG_PATH)
 
 
-async def update_bot(interaction):
+async def update_bot(ctx: discord.ApplicationContext):
     try:
         subprocess.run(["git", "pull"])
 
@@ -99,7 +100,7 @@ async def update_bot(interaction):
 
         sys.exit()
     except Exception as e:
-        await interaction.followup.send(f"При обновлении произошла ошибка: {e}", ephemeral=True)
+        await ctx.followup.send(f"При обновлении произошла ошибка: {e}", ephemeral=True)
 
 
 def check_date(day, month):
