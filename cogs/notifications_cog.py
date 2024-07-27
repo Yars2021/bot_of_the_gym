@@ -19,7 +19,7 @@ class NotificationsModuleCommands(commands.Cog, name="notifications_cog"):
         self.history = self.path + "history"
 
     @slash_command(
-        name="tnotify",
+        name="notify",
         description="Добавить напоминание",
         guild_ids=[global_vars.SERVER_ID]
     )

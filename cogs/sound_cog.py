@@ -16,7 +16,7 @@ class SoundModuleCommands(commands.Cog, name="sound_cog"):
         self.sound_module = global_vars.SOUND_FUNCTIONS
 
     @slash_command(
-        name="tplay",
+        name="play",
         description="Играть по ссылке или названию",
         guild_ids=[global_vars.SERVER_ID]
     )
@@ -47,7 +47,7 @@ class SoundModuleCommands(commands.Cog, name="sound_cog"):
                 await self.sound_module.find_and_play(ctx, request)
 
     @slash_command(
-        name="tright_play",
+        name="right_play",
         description="♂Играть♂ по названию (YouTube)",
         guild_ids=[global_vars.SERVER_ID]
     )
@@ -69,7 +69,7 @@ class SoundModuleCommands(commands.Cog, name="sound_cog"):
                 await self.sound_module.find_and_play(ctx, request + " right version")
 
     @slash_command(
-        name="tqueue",
+        name="queue",
         description="Показать очередь музыки",
         guild_ids=[global_vars.SERVER_ID]
     )
@@ -87,7 +87,7 @@ class SoundModuleCommands(commands.Cog, name="sound_cog"):
         await ctx.respond(embed=cover_embed, ephemeral=True)
 
     @slash_command(
-        name="tsong",
+        name="song",
         description="Подробнее о текущей песне",
         guild_ids=[global_vars.SERVER_ID]
     )
@@ -101,7 +101,7 @@ class SoundModuleCommands(commands.Cog, name="sound_cog"):
         await ctx.respond(embed=cover_embed, ephemeral=True)
 
     @slash_command(
-        name="tcontrols",
+        name="controls",
         description="Вывести интерфейс управления",
         guild_ids=[global_vars.SERVER_ID]
     )
