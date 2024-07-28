@@ -39,9 +39,8 @@ class SoundModuleCommands(commands.Cog, name="sound_cog"):
                 else:
                     request = ""
 
-                    await ctx.edit(
-                        embed=utils.error_embed(f"Ошибка поиска по ссылке Spotify: {conversion_result}"),
-                        ephemeral=True)
+                    await ctx.edit(content="",
+                                   embed=utils.error_embed(f"Ошибка поиска по ссылке Spotify: {conversion_result}"))
 
             if len(request) > 0:
                 await self.sound_module.find_and_play(ctx, request)

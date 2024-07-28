@@ -176,7 +176,7 @@ class SoundModule:
     def pop_and_continue(self):
         self.is_playing = False
 
-        if len(self.sound_queue) > 0:
+        if len(self.song_queue) > 0:
             last_song = self.song_queue.pop(0)
 
             if self.is_looped and not self.skip_flag:
@@ -186,7 +186,7 @@ class SoundModule:
 
             self.skip_flag = False
 
-            if len(self.sound_queue) > 0:
+            if len(self.song_queue) > 0:
                 self.play()
 
     def play(self):
