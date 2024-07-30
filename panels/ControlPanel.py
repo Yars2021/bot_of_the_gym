@@ -17,7 +17,7 @@ class ControlPanel(discord.ui.View):
     )
     async def join(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
         if not self.sound_module.is_locked():
-            await self.sound_module.join(interaction)
+            await self.sound_module.join_for_sounds(interaction)
 
             for child in self.children:
                 if type(child) == discord.ui.Button and child.custom_id == "listen_btn":

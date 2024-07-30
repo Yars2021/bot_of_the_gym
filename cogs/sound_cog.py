@@ -1,6 +1,6 @@
 import discord
 from discord import slash_command
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 import utils
 import validators
@@ -94,7 +94,10 @@ class SoundModuleCommands(commands.Cog, name="sound_cog"):
         if len(self.sound_module.song_queue) <= 0:
             cover_embed = utils.header_error_embed("Очередь пуста")
         else:
-            cover_embed = utils.music_cover_embed(self.sound_module.song_queue[0]["title"])
+            cover_embed = utils.full_music_cover_embed(
+                self.sound_module.song_queue[0]["title"],
+                self.sound_module.song_queue[0]["url"]
+            )
             cover_embed.set_image(url=self.sound_module.song_queue[0]["thumbnail"])
 
         await ctx.respond(embed=cover_embed, ephemeral=True)
