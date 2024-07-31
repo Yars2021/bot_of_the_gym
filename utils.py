@@ -55,7 +55,7 @@ def embed_chain(title, text, color, sep=" "):
                 description = token
 
         if len(description) > 0:
-            embeds.append(message_embed(title, description, color))
+            embeds.append(message_embed("", description, color))
 
         return embeds
 
