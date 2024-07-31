@@ -69,7 +69,10 @@ class BirthdayModuleCommands(commands.Cog, name="birthday_module"):
             users = {}
 
             async for member in members:
-                users[str(member.id)] = member.nick
+                if member.nick is not None:
+                    users[str(member.id)] = member.nick
+                else:
+                    users[str(member.id)] = member.global_name
 
             table = ""
             index = 1
