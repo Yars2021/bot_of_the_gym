@@ -6,6 +6,7 @@ import random
 import requests
 import speech_recognition
 import utils
+import validators
 import yt_dlp
 
 from bs4 import BeautifulSoup
@@ -38,7 +39,11 @@ class SoundModule:
         self.ffmpeg_options = {
             "options": "-vn"
         }
-        self.ytdl_options = {
+        self.ytdl_playlist_info_options = {
+            "extract_flat": True,
+            "skip_download": True
+        }
+        self.ytdl_full_options = {
             "format": "bestaudio/best",
             "outtmpl": os.path.join(self.music_root, self.music_dir, "%(extractor)s-%(id)s-%(title)s.%(ext)s"),
             "restrictfilenames": True,
@@ -56,7 +61,8 @@ class SoundModule:
         }
 
         self.recognizer = speech_recognition.Recognizer()
-        self.ytdl = yt_dlp.YoutubeDL(self.ytdl_options)
+        self.ytdl_playlist_info = yt_dlp.YoutubeDL(self.ytdl_playlist_info_options)
+        self.ytdl_full = yt_dlp.YoutubeDL(self.ytdl_full_options)
 
     @staticmethod
     def process_spotify_link(link):
@@ -83,7 +89,7 @@ class SoundModule:
             if self.voice_client is not None:
                 await self.voice_client.move_to(self.voice_channel)
             else:
-                self.voice_client = await self.voice_channel.connect(reconnect=True)
+                self.voice_client = await self.voice_channel.connect()
 
             self.sounds_active = True
 
@@ -94,7 +100,7 @@ class SoundModule:
         if self.voice_client is not None:
             await self.voice_client.move_to(self.voice_channel)
         else:
-            self.voice_client = await self.voice_channel.connect(reconnect=True)
+            self.voice_client = await self.voice_channel.connect()
 
     async def leave_channel(self):
         while self.voice_client is not None and self.voice_client.is_playing():
@@ -117,7 +123,7 @@ class SoundModule:
             if self.voice_client is not None and self.voice_client.is_connected():
                 self.voice_client.play(discord.FFmpegPCMAudio(
                     source=self.soundboard_directory_path + self.sound_queue[0], **self.ffmpeg_options),
-                                  after=lambda e: self.get_next_sound())
+                    after=lambda e: self.get_next_sound())
 
     def is_locked(self):
         return self.is_playing or len(self.song_queue) > 0
@@ -162,21 +168,19 @@ class SoundModule:
 
     def fetch_single_file_yt(self, request):
         try:
-            info = self.ytdl.extract_info(request, download=True)
+            info = self.ytdl_full.extract_info(request, download=True)
 
             if "entries" in info:
                 return -1, "Ошибка формата при скачивании"
             else:
-                return 0, self.ytdl.prepare_filename(info)
+                return 0, self.ytdl_full.prepare_filename(info)
 
         except Exception as e:
-            return -1, f"Ошибка скеачивания: {e}"
+            return -1, f"Ошибка скачивания: {e}"
 
-    def fetch_headers_yt(self, url):
-        titles = []
-
+    def fetch_single_item_yt(self, url):
         try:
-            info = self.ytdl.extract_info(url, download=False)
+            info = self.ytdl_full.extract_info(url, download=False)
 
             if "entries" not in info:
                 titles = [{
@@ -185,19 +189,38 @@ class SoundModule:
                     "url": info["webpage_url"]
                 }]
             else:
-                for entry in info["entries"]:
-                    titles.append({
-                        "title": entry["title"],
-                        "thumbnail": entry["thumbnail"],
-                        "url": entry["webpage_url"]
-                    })
-
-            list(filter(lambda x: x is not None, titles))
+                titles = [{
+                    "title": info["entries"][0]["title"],
+                    "thumbnail": info["entries"][0]["thumbnail"],
+                    "url": info["entries"][0]["webpage_url"]
+                }]
 
             return 0, titles
 
         except Exception as e:
             return -1, [f"Ошибка поиска: {e}"]
+
+    def fetch_item_list_yt(self, url):
+        titles = []
+
+        try:
+            info = self.ytdl_playlist_info.extract_info(url, download=False)
+
+            if "entries" not in info:
+                return -1, [f"Ошибка формата при поиске"]
+            else:
+                for entry in info["entries"]:
+                    if entry is not None:
+                        titles.append({
+                            "title": entry["title"],
+                            "thumbnail": entry["thumbnails"][0]["url"],
+                            "url": entry["url"]
+                        })
+
+            return 0, info["title"], titles
+
+        except Exception as e:
+            return -1, "", [f"Ошибка поиска: {e}"]
 
     def load_first_song(self):
         if len(self.songs_to_load) > 0:
@@ -230,7 +253,8 @@ class SoundModule:
                         if song["title"] == name:
                             song["filename"] = result
 
-                self.songs_to_load.pop(index)
+                if len(self.songs_to_load) > index:
+                    self.songs_to_load.pop(index)
 
     def shuffle(self):
         if len(self.song_queue) > 1:
@@ -269,7 +293,13 @@ class SoundModule:
                     after=lambda e: self.pop_and_continue())
 
     async def find(self, ctx, request: str):
-        header_code, search_result = self.fetch_headers_yt(request)
+        message = "Добавляю в очередь"
+
+        if not validators.url(request) or not (request.find("/playlist?list=") != -1 or request.find("watch") != -1 and request.find("list=") != -1):
+            header_code, search_result = self.fetch_single_item_yt(request)
+        else:
+            header_code, title, search_result = self.fetch_item_list_yt(request)
+            message += " \"" + title + "\""
 
         if header_code != 0:
             await ctx.edit(content="", embed=utils.error_embed(str(search_result[0])))
@@ -286,9 +316,11 @@ class SoundModule:
                     self.song_queue.append(search_result[index])
                     self.songs_to_load.append(search_result[index])
 
-            await ctx.edit(content="", embed=utils.full_info_embed(
-                "Добавляю в очередь",
-                queued_title
+            await ctx.edit(content="", embeds=utils.embed_chain(
+                message,
+                queued_title,
+                0x00b0f4,
+                sep="\n"
             ))
 
         return header_code

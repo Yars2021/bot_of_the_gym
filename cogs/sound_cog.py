@@ -74,16 +74,16 @@ class SoundModuleCommands(commands.Cog, name="sound_cog"):
     )
     async def command_queue(self, ctx: discord.ApplicationContext) -> None:
         if len(self.sound_module.song_queue) <= 0:
-            cover_embed = utils.header_error_embed("Очередь пуста")
+            queue_embed = utils.header_error_embed("Очередь пуста")
         else:
             message = ""
 
             for index in range(len(self.sound_module.song_queue)):
                 message += (str(index + 1) + ". " + self.sound_module.song_queue[index]["title"] + "\n")
 
-            cover_embed = utils.message_embed("Очередь музыки", message, 0x7a00f5)
+            queue_embed = utils.embed_chain("Очередь музыки", message, 0x7a00f5, sep="\n")
 
-        await ctx.respond(embed=cover_embed, ephemeral=True)
+        await ctx.respond(embeds=queue_embed, ephemeral=True)
 
     @slash_command(
         name="song",

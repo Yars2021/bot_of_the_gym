@@ -33,6 +33,33 @@ def message_embed(title, text, color):
         )
 
 
+def embed_chain(title, text, color, sep=" "):
+    if len(text) <= 4096:
+        return [message_embed(title, text, color)]
+    else:
+        embeds = []
+        tokens = text.split(sep=sep)
+        description = ""
+        title_flag = True
+
+        for token in tokens:
+            if len(token) + len(description) <= 4096:
+                description += token + sep
+            else:
+                if not title_flag:
+                    embeds.append(message_embed("", description, color))
+                else:
+                    embeds.append(message_embed(title, description, color))
+                    title_flag = False
+
+                description = token
+
+        if len(description) > 0:
+            embeds.append(message_embed(title, description, color))
+
+        return embeds
+
+
 def error_embed(text):
     return message_embed("", text, 0xf50000)
 
