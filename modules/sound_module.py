@@ -192,6 +192,8 @@ class SoundModule:
                         "url": entry["webpage_url"]
                     })
 
+            list(filter(lambda x: x is not None, titles))
+
             return 0, titles
 
         except Exception as e:
@@ -270,7 +272,7 @@ class SoundModule:
         header_code, search_result = self.fetch_headers_yt(request)
 
         if header_code != 0:
-            await ctx.edit(content="", embed=utils.error_embed("Ошибка поиска: " + str(search_result[0])))
+            await ctx.edit(content="", embed=utils.error_embed(str(search_result[0])))
         else:
             if len(search_result) == 1:
                 queued_title = search_result[0]["title"]
