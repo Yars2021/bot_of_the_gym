@@ -77,11 +77,11 @@ def full_info_embed(title, text):
 
 
 def music_cover_embed(title):
-    return message_embed(title, "", 0x7a00f5)
+    return message_embed(title, "", 0xff622e)
 
 
 def full_music_cover_embed(title, text):
-    return message_embed(title, text, 0x7a00f5)
+    return message_embed(title, text, 0xff622e)
 
 
 def read_config(path):

@@ -9,6 +9,19 @@ class Player(discord.ui.View):
         self.sound_module = global_vars.SOUND_FUNCTIONS
 
     @discord.ui.button(
+        custom_id="stop_btn",
+        label="",
+        row=0,
+        style=discord.ButtonStyle.primary,
+        emoji="⏹️"
+    )
+    async def stop(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
+        if self.sound_module.voice_client is not None:
+            await self.sound_module.voice_client.disconnect()
+
+        await interaction.edit(content="")
+
+    @discord.ui.button(
         custom_id="pause_btn",
         label="",
         row=0,
@@ -30,19 +43,6 @@ class Player(discord.ui.View):
         await interaction.edit(content="", view=self)
 
     @discord.ui.button(
-        custom_id="stop_btn",
-        label="",
-        row=0,
-        style=discord.ButtonStyle.primary,
-        emoji="⏹️"
-    )
-    async def stop(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
-        if self.sound_module.voice_client is not None:
-            await self.sound_module.voice_client.disconnect()
-
-        await interaction.edit(content="")
-
-    @discord.ui.button(
         custom_id="skip_btn",
         label="",
         row=0,
@@ -56,28 +56,16 @@ class Player(discord.ui.View):
             self.sound_module.voice_client.stop()
 
         if len(self.sound_module.song_queue) > 1:
-            await self.sound_module.reset_player(interaction)
+            await self.sound_module.reset_player(interaction.channel)
             self.sound_module.play()
         else:
             if self.sound_module.voice_client is not None:
                 await self.sound_module.voice_client.disconnect()
 
     @discord.ui.button(
-        custom_id="shuffle_btn",
-        label="",
-        row=0,
-        style=discord.ButtonStyle.primary,
-        emoji="🔀"
-    )
-    async def shuffle(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
-        self.sound_module.shuffle()
-
-        await interaction.edit(content="", view=self)
-
-    @discord.ui.button(
         custom_id="loop_btn",
         label="",
-        row=0,
+        row=1,
         style=discord.ButtonStyle.secondary,
         emoji="🔁"
     )
@@ -90,3 +78,27 @@ class Player(discord.ui.View):
             button.style = discord.ButtonStyle.secondary
 
         await interaction.edit(content="", view=self)
+
+    @discord.ui.button(
+        custom_id="shuffle_btn",
+        label="",
+        row=1,
+        style=discord.ButtonStyle.primary,
+        emoji="🔀"
+    )
+    async def shuffle(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
+        self.sound_module.shuffle()
+
+        await interaction.edit(content="", view=self)
+
+    @discord.ui.button(
+        custom_id="queue_btn",
+        label="",
+        row=1,
+        style=discord.ButtonStyle.primary,
+        emoji="ℹ️"
+    )
+    async def queue(self, button: discord.ui.Button, interaction: discord.Interaction) -> None:
+        await interaction.edit(content="", view=self)
+
+        await self.sound_module.show_queue(interaction.channel)

@@ -68,41 +68,6 @@ class SoundModuleCommands(commands.Cog, name="sound_cog"):
                 await self.sound_module.find_and_play(ctx, request + " right version")
 
     @slash_command(
-        name="queue",
-        description="Показать очередь музыки",
-        guild_ids=[global_vars.SERVER_ID]
-    )
-    async def command_queue(self, ctx: discord.ApplicationContext) -> None:
-        if len(self.sound_module.song_queue) <= 0:
-            queue_embed = utils.header_error_embed("Очередь пуста")
-        else:
-            message = ""
-
-            for index in range(len(self.sound_module.song_queue)):
-                message += (str(index + 1) + ". " + self.sound_module.song_queue[index]["title"] + "\n")
-
-            queue_embed = utils.embed_chain("Очередь музыки", message, 0x7a00f5, sep="\n")
-
-        await ctx.respond(embeds=queue_embed, ephemeral=True)
-
-    @slash_command(
-        name="song",
-        description="Подробнее о текущей песне",
-        guild_ids=[global_vars.SERVER_ID]
-    )
-    async def command_song(self, ctx: discord.ApplicationContext) -> None:
-        if len(self.sound_module.song_queue) <= 0:
-            cover_embed = utils.header_error_embed("Очередь пуста")
-        else:
-            cover_embed = utils.full_music_cover_embed(
-                self.sound_module.song_queue[0]["title"],
-                self.sound_module.song_queue[0]["url"]
-            )
-            cover_embed.set_image(url=self.sound_module.song_queue[0]["thumbnail"])
-
-        await ctx.respond(embed=cover_embed, ephemeral=True)
-
-    @slash_command(
         name="controls",
         description="Вывести интерфейс управления",
         guild_ids=[global_vars.SERVER_ID]

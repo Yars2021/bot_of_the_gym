@@ -30,6 +30,7 @@ class SoundModule:
         self.voice_client = None
         self.voice_channel = None
         self.listening_thread = None
+        self.last_queue_msg = None
         self.player = None
 
         self.soundboard_directory_path = "./data/soundboard/"
@@ -156,15 +157,19 @@ class SoundModule:
         if os.path.exists(os.path.exists(os.path.join(self.music_root, self.music_dir) + "/" + path)):
             os.system("rm -f " + os.path.join(self.music_root, self.music_dir) + "/" + path)
 
-    async def reset_player(self, ctx):
+    async def reset_player(self, channel):
         if self.player is not None:
             await self.player.delete()
 
         if len(self.song_queue) > 0:
-            self.player = await ctx.channel.send(view=Player(), embed=utils.full_music_cover_embed(
+            playerEmbed = utils.full_music_cover_embed(
                 "Сейчас играет",
-                self.song_queue[0]["title"]
-            ))
+                self.song_queue[0]["title"] + "\n\n[Ссылка на источник](" + self.song_queue[0]["url"] + ")"
+            )
+
+            playerEmbed.set_thumbnail(url=self.song_queue[0]["thumbnail"])
+
+            self.player = await channel.send(view=Player(), embed=playerEmbed)
 
     def fetch_single_file_yt(self, request):
         try:
@@ -239,7 +244,7 @@ class SoundModule:
             index = 0
 
             for song in self.songs_to_load:
-                if song["title"] == name:
+                if song["title"] == name and "filename" not in song:
                     url = song["url"]
                     break
 
@@ -330,7 +335,7 @@ class SoundModule:
 
         if header_code == 0:
             self.load_first_song()
-            await self.reset_player(ctx)
+            await self.reset_player(ctx.channel)
 
             if not self.is_playing:
                 await self.join_channel(ctx)
@@ -369,6 +374,28 @@ class SoundModule:
             await self.player.delete()
 
         self.player = None
+
+        if self.last_queue_msg is not None:
+            await self.last_queue_msg.delete()
+
+        self.last_queue_msg = None
+
+    async def show_queue(self, channel):
+        if self.last_queue_msg is not None:
+            await self.last_queue_msg.delete()
+
+        if len(self.song_queue) <= 0:
+            queue_embed = utils.header_error_embed("Очередь пуста")
+        else:
+            message = ""
+
+            for index in range(len(self.song_queue)):
+                message += (str(index + 1) + ". " + self.song_queue[index]["title"] + "\n")
+
+            queue_embed = utils.embed_chain("Очередь музыки", message, 0x7a00f5, sep="\n")
+
+        self.last_queue_msg = await channel.send(embeds=queue_embed)
+        await self.reset_player(channel)
 
     async def start_listening(self):
         if self.listening_thread is None:
