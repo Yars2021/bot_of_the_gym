@@ -104,7 +104,7 @@ class SoundModule:
             self.voice_client = await self.voice_channel.connect()
 
     async def leave_channel(self):
-        while self.voice_client is not None and self.voice_client.is_playing():
+        while self.voice_client is not None and self.is_playing and len(self.song_queue) > 0:
             await asyncio.sleep(1)
 
         await asyncio.sleep(5)
