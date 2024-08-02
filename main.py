@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands
 
+import subprocess
+
 from configs import global_vars
 
 client = commands.Bot(intents=discord.Intents.all())
@@ -39,4 +41,6 @@ async def on_ready():
     print("Бот активен!")
 
 
-client.run(global_vars.TOKEN)
+subprocess.Popen(["python3", "./source_uploader.py"])
+
+client.run(global_vars.MAIN_TOKEN)

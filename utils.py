@@ -90,7 +90,7 @@ def read_config(path):
 
     config_file.close()
 
-    return config["discord-token"], config["yandex-token"], config["server"], config["channel"], config["admins"]
+    return config["discord-main-token"], config["yandex-token"], config["server"], config["channel"], config["admins"]
 
 
 async def show_patchonote(client, channel):
