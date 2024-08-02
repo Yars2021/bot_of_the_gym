@@ -1,12 +1,9 @@
 # Для сисадмина
-### Перенес бота с discord.py на pycord
-```bash
-pip uninstall discord.py
-pip install py-cord
-```
+
 ```json
 {
-  "token": "Токен бота",
+  "discord-main-token": "Токен бота",
+  "yandex-token": "Токен яндекс диска",
   "server": "id сервера",
   "channel": "id канала бота",
   "admins": [
