@@ -106,8 +106,11 @@ class NotificationsModuleCommands(commands.Cog, name="notifications_cog"):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.notifications_loop.start()
-        self.notifications_cleanup_loop.start()
+        if not self.notifications_loop.is_running():
+            self.notifications_loop.start()
+
+        if not self.notifications_cleanup_loop.is_running():
+            self.notifications_cleanup_loop.start()
 
 
 def setup(bot):

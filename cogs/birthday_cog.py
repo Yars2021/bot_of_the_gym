@@ -123,7 +123,8 @@ class BirthdayModuleCommands(commands.Cog, name="birthday_module"):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.birthday_loop.start()
+        if not self.birthday_loop.is_running():
+            self.birthday_loop.start()
 
 
 def setup(bot):

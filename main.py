@@ -25,7 +25,9 @@ async def on_connect():
     global client
 
     for extension in global_vars.EXTENSIONS:
-        client.load_extension(extension)
+        if not global_vars.EXTENSIONS[extension]:
+            client.load_extension(extension)
+            global_vars.EXTENSIONS[extension] = True
 
     await client.sync_commands()
 
