@@ -25,10 +25,12 @@ class InternetCommands(commands.Cog, name="internet"):
 
     @slash_command(
         name="youtube_src",
-        description="Скачать видео по ссылке (YouTube)",
+        description="Скачать звук/видео по ссылке (YouTube)",
         guild_ids=[global_vars.SERVER_ID]
     )
-    async def command_youtube_src(self, ctx: discord.ApplicationContext, request: str, force_disk: discord.Option(bool, required=False, default=False)):
+    async def command_youtube_src(self, ctx: discord.ApplicationContext, request: str,
+                                  sound_only: discord.Option(bool, required=False, default=False),
+                                  force_disk: discord.Option(bool, required=False, default=False)):
         if not validators.url(request):
             await ctx.respond(
                 embed=utils.error_embed("Эта команда может искать только по ссылке"),
@@ -40,14 +42,21 @@ class InternetCommands(commands.Cog, name="internet"):
 
             now = datetime.datetime.utcnow()
 
+            if sound_only:
+                download_format = "bestaudio/best"
+                preferred_codec = "mp3"
+            else:
+                download_format = "bestvideo+bestaudio/best"
+                preferred_codec = "mp4"
+
             ytdl_video = yt_dlp.YoutubeDL({
-                "format": "bestvideo+bestaudio/best",
+                "format": download_format,
                 "outtmpl": os.path.join(
                     self.sources_root,
                     self.sources_dir,
                     f"{ctx.user.global_name}_{str(now.year)}{str(now.month)}{str(now.day)}{str(now.hour)}{str(now.minute)}{str(now.second)}.%(ext)s"
                 ),
-                "preferredcodec": "mp4",
+                "preferredcodec": preferred_codec,
             })
 
             info = ytdl_video.extract_info(request, download=True)
