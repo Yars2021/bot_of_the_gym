@@ -1,6 +1,6 @@
 import discord
 from discord import slash_command
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 import ast
 import json
@@ -53,6 +53,41 @@ class InternetCommands(commands.Cog, name="internet"):
                 json.dump(files, f)
 
             f.close()
+
+    @tasks.loop(seconds=5)
+    async def check_uploads_loop(self):
+        if os.path.exists(global_vars.uploaded_files):
+            with open(global_vars.uploaded_files, "r", encoding="utf-8") as f:
+                uploaded_files = list(ast.literal_eval(f.read()))
+
+            f.close()
+
+            if len(uploaded_files) > 0:
+                uploaded_file = uploaded_files.pop(0)
+
+                with open(global_vars.uploaded_files, "w", encoding="utf-8") as f:
+                    json.dump(uploaded_files, f)
+
+                f.close()
+
+                user_id = int(uploaded_file["requester"])
+                result = uploaded_file["result"]
+                video_title = uploaded_file["title"]
+
+                if result == "token_fail":
+                    await (await self.bot.fetch_user(user_id)).send(embed=utils.error_embed(result))
+                else:
+                    await (await self.bot.fetch_user(user_id)).send(
+                        embed=utils.full_info_embed(
+                            "Загрузить файл",
+                            f"[{video_title}]({result})"
+                        )
+                    )
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        if not self.check_uploads_loop.is_running():
+            self.check_uploads_loop.start()
 
 
 def setup(bot):

@@ -13,8 +13,7 @@ EXTENSIONS = {
     "cogs.birthday_cog": False,
     "cogs.notifications_cog": False,
     "cogs.sound_cog": False,
-    "cogs.internet_cog": False,
-    "cogs.uploader_cog": False
+    "cogs.internet_cog": False
 }
 
 SIZE_FUNCTIONS = SizeModule()
