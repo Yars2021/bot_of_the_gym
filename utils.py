@@ -90,7 +90,7 @@ def read_config(path):
 
     config_file.close()
 
-    return config["token"], config["server"], config["channel"], config["admins"]
+    return config["discord-token"], config["yandex-token"], config["server"], config["channel"], config["admins"]
 
 
 async def show_patchonote(client, channel):
@@ -116,6 +116,11 @@ async def show_update_info(client, channel):
         os.remove(UPDATE_FLAG_PATH)
 
 
+def restart_bot():
+    os.system(f"echo \"python3 ./main.py\" | at -t {datetime.datetime.fromtimestamp(time.time()) + datetime.timedelta(seconds=10)}")
+    sys.exit()
+
+
 async def update_bot(ctx: discord.ApplicationContext):
     try:
         subprocess.run(["git", "pull"])
@@ -123,10 +128,7 @@ async def update_bot(ctx: discord.ApplicationContext):
         with open("./.updated", "w", encoding="utf-8") as flag_file:
             flag_file.close()
 
-        os.system(f"echo \"python3 ./main.py\" | at -t"
-                  f"{datetime.datetime.fromtimestamp(time.time()) + datetime.timedelta(seconds=10)}")
-
-        sys.exit()
+        restart_bot()
     except Exception as e:
         await ctx.followup.send(f"При обновлении произошла ошибка: {e}", ephemeral=True)
 

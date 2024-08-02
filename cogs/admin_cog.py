@@ -14,6 +14,22 @@ class AdminCommands(commands.Cog, name="admin"):
         self.bot_channel = global_vars.BOT_CHANNEL
 
     @slash_command(
+        name="restart",
+        description="Перезапустить бота",
+        guild_ids=[global_vars.SERVER_ID]
+    )
+    async def command_restart(self, ctx: discord.ApplicationContext):
+        if str(ctx.user.id) not in self.admin_ids:
+            await ctx.respond(embed=utils.error_embed("Недостаточно прав"),
+                              ephemeral=True,
+                              delete_after=utils.MESSAGE_TIMER[1])
+        else:
+            await ctx.respond(embed=utils.info_embed("Перезапуск..."),
+                              ephemeral=True,
+                              delete_after=utils.MESSAGE_TIMER[0])
+            utils.restart_bot()
+
+    @slash_command(
         name="update",
         description="Обновить бота",
         guild_ids=[global_vars.SERVER_ID]

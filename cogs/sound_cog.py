@@ -1,6 +1,6 @@
 import discord
 from discord import slash_command
-from discord.ext import commands, tasks
+from discord.ext import commands
 
 import utils
 import validators
