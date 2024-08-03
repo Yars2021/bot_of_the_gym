@@ -1,6 +1,7 @@
 /data/.birthday_table
 /data/.size_table
-/data/yt_src/*
+/data/notifications/!history
+/data/yt_video_sources
 .bot_config
 .idea/vcs.xml
 .idea/inspectionProfiles/profiles_settings.xml
