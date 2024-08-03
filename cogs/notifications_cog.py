@@ -20,8 +20,7 @@ class NotificationsModuleCommands(commands.Cog, name="notifications_cog"):
 
     @slash_command(
         name="notify",
-        description="Добавить напоминание",
-        guild_ids=[global_vars.SERVER_ID]
+        description="Добавить напоминание"
     )
     async def command_notify(self, ctx: discord.ApplicationContext, timezone: int, day: int, month: int, year: int,
                              hours: int, minutes: int, text: str) -> None:

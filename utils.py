@@ -5,8 +5,9 @@ import ast
 import datetime
 import os.path
 import subprocess
-import time
 import sys
+import time
+import validators
 
 
 UPDATE_FLAG_PATH = "./.updated"
@@ -52,12 +53,55 @@ def embed_chain(title, text, color, sep=" "):
                     embeds.append(message_embed(title, description, color))
                     title_flag = False
 
-                description = token
+                description = token + "\n"
 
         if len(description) > 0:
             embeds.append(message_embed("", description, color))
 
         return embeds
+
+
+def video_embed_chain(title, url, author, date, description):
+    if len(description) <= 4090:
+        video_embed = discord.Embed(title=title,
+                                    url=url,
+                                    description="```" + description + "```",
+                                    colour=0x9e9e9e)
+
+        video_embed.set_author(name=author)
+        video_embed.set_footer(text=separate_date(date))
+
+        return [video_embed]
+    else:
+        video_embeds = []
+        tokens = description.split(sep="\n")
+        desc_part = ""
+        title_flag = True
+
+        for token in tokens:
+            if len(token) + len(desc_part) <= 4080:
+                desc_part += token + "\n"
+            else:
+                if not title_flag:
+                    video_embeds.append(discord.Embed(description="```" + desc_part + "```", colour=0x9e9e9e))
+                else:
+                    video_embeds.append(discord.Embed(
+                        title=title,
+                        url=url,
+                        description="```" + desc_part + "```",
+                        colour=0x9e9e9e))
+
+                    title_flag = False
+
+                desc_part = token + "\n"
+
+        if len(desc_part) > 0:
+            video_embeds.append(discord.Embed(description="```" + desc_part + "```", colour=0x9e9e9e))
+
+        video_embeds[0].set_author(name=author)
+        video_embeds[-1].set_footer(text=separate_date(date))
+
+        return video_embeds
 
 
 def error_embed(text):
@@ -86,6 +130,15 @@ def full_music_cover_embed(title, text):
 
 def separate_date(date: str):
     return date[-2:] + "." + date[-4:-2] + "." + date[:-4]
+
+
+def is_playlist_link(request):
+    return not (not validators.url(request) or
+                not (request.find("/playlist?list=") != -1
+                     or request.find("watch") != -1
+                     and request.find("list=") != -1
+                     )
+                )
 
 
 def read_config(path):

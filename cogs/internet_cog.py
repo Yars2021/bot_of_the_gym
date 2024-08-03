@@ -7,6 +7,7 @@ import json
 import os
 import utils
 import validators
+import yt_dlp
 
 from configs import global_vars
 
@@ -14,45 +15,73 @@ from configs import global_vars
 class InternetCommands(commands.Cog, name="internet"):
     def __init__(self, bot):
         self.bot = bot
+        self.ytdl_search = yt_dlp.YoutubeDL({
+            "restrictfilenames": True,
+            "noplaylist": True,
+            "nocheckcertificate": True,
+            "default_search": "auto",
+            "source_address": "0.0.0.0",
+            "force-ipv4": True,
+            "cachedir": False
+        })
+        self.ytdl_info = yt_dlp.YoutubeDL({
+            "extract_flat": True,
+            "skip_download": True,
+        })
 
     @slash_command(
         name="youtube_src",
-        description="Скачать звук/видео по ссылке (YouTube)",
-        guild_ids=[global_vars.SERVER_ID]
+        description="Скачать звук/видео по ссылке (YouTube)"
     )
     async def command_youtube_src(self, ctx: discord.ApplicationContext, request: str,
                                   sound_only: discord.Option(bool, required=False, default=False)):
-        if not validators.url(request):
-            await ctx.respond(
-                embed=utils.error_embed("Эта команда может искать только по ссылке"),
-                ephemeral=True)
-        else:
-            await ctx.respond(embed=utils.info_embed("Запрос отправлен"),
-                              ephemeral=True,
-                              delete_after=utils.MESSAGE_TIMER[1])
+        await ctx.respond(embed=utils.info_embed("Запрос отправлен"),
+                          ephemeral=True,
+                          delete_after=utils.MESSAGE_TIMER[1])
 
-            if not os.path.exists(global_vars.files_to_upload):
-                with open(global_vars.files_to_upload, "w", encoding="utf-8") as f:
-                    f.write("[]")
-
-                f.close()
-
-            with open(global_vars.files_to_upload, "r", encoding="utf-8") as f:
-                files = list(ast.literal_eval(f.read()))
+        if not os.path.exists(global_vars.files_to_upload):
+            with open(global_vars.files_to_upload, "w", encoding="utf-8") as f:
+                f.write("[]")
 
             f.close()
 
+        with open(global_vars.files_to_upload, "r", encoding="utf-8") as f:
+            files = list(ast.literal_eval(f.read()))
+
+        f.close()
+
+        if not validators.url(request):
+            search_result = self.ytdl_search.extract_info(request, download=False)
+
+            if "entries" not in search_result:
+                request = search_result["webpage_url"]
+            else:
+                request = search_result["entries"][0]["webpage_url"]
+
+        info = self.ytdl_info.extract_info(request, download=False)
+
+        if not utils.is_playlist_link(request):
             files.append({
                 "requester": str(ctx.user.id),
                 "name": str(ctx.user.global_name),
-                "request": request,
+                "request": info["webpage_url"],
                 "format_flag": str(sound_only)
             })
+        else:
+            if "entries" in info:
+                for entry in info["entries"]:
+                    if entry is not None:
+                        files.append({
+                            "requester": str(ctx.user.id),
+                            "name": str(ctx.user.global_name),
+                            "request": entry["url"],
+                            "format_flag": str(sound_only)
+                        })
 
-            with open(global_vars.files_to_upload, "w", encoding="utf-8") as f:
-                json.dump(files, f)
+        with open(global_vars.files_to_upload, "w", encoding="utf-8") as f:
+            json.dump(files, f)
 
-            f.close()
+        f.close()
 
     @tasks.loop(seconds=5)
     async def check_uploads_loop(self):
@@ -80,15 +109,19 @@ class InternetCommands(commands.Cog, name="internet"):
                 if result_link == "token_fail":
                     await (await self.bot.fetch_user(user_id)).send(embed=utils.error_embed(result_link))
                 else:
-                    video_embed = discord.Embed(title=video_title,
-                                                url=result_link,
-                                                description="```" + video_description + "```",
-                                                colour=0x9e9e9e)
+                    video_embeds = utils.video_embed_chain(
+                        video_title,
+                        result_link,
+                        video_uploader,
+                        utils.separate_date(video_upload_date),
+                        video_description
+                    )
 
-                    video_embed.set_author(name=video_uploader)
-                    video_embed.set_footer(text=utils.separate_date(video_upload_date))
+                    for video_embed in video_embeds:
+                        print(video_embed)
 
-                    await (await self.bot.fetch_user(user_id)).send(embed=video_embed)
+                    for video_embed in video_embeds:
+                        await (await self.bot.fetch_user(user_id)).send(embed=video_embed)
 
     @commands.Cog.listener()
     async def on_ready(self):

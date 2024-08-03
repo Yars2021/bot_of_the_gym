@@ -6,7 +6,6 @@ import random
 import requests
 import speech_recognition
 import utils
-import validators
 import yt_dlp
 
 from bs4 import BeautifulSoup
@@ -300,7 +299,7 @@ class SoundModule:
     async def find(self, ctx: discord.ApplicationContext, request: str):
         message = "Добавляю в очередь"
 
-        if not validators.url(request) or not (request.find("/playlist?list=") != -1 or request.find("watch") != -1 and request.find("list=") != -1):
+        if not utils.is_playlist_link(request):
             header_code, search_result = self.fetch_single_item_yt(request)
         else:
             header_code, title, search_result = self.fetch_item_list_yt(request)

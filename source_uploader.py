@@ -13,6 +13,36 @@ sources_root = os.path.join(os.path.dirname(__file__), "./data")
 sources_dir = "yt_video_sources"
 
 
+def shuffle_requests(request_list):
+    if len(request_list) <= 0:
+        return []
+    else:
+        requester_dict = {}
+
+        for request_entry in request_list:
+            if request_entry["requester"] not in requester_dict:
+                requester_dict[request_entry["requester"]] = [request_entry]
+            else:
+                requester_dict[request_entry["requester"]].append(request_entry)
+
+        shuffled_requests = []
+
+        iterated_users = 1
+
+        while iterated_users > 0:
+            for requester in requester_dict:
+                iterated_users = 0
+
+                if len(requester_dict[requester]) > 0:
+                    shuffled_requests.append(requester_dict[requester].pop(0))
+                    iterated_users += 1
+
+                if iterated_users == 0:
+                    break
+
+        return shuffled_requests
+
+
 def get_data(request_data_dict):
     return int(request_data_dict["requester"]), request_data_dict["name"], request_data_dict["request"],\
         (request_data_dict["format_flag"] == "True")
@@ -33,12 +63,12 @@ def download_file(request_str, sound_only_flag):
 
     ytdl_video = yt_dlp.YoutubeDL({
         "format": download_format,
+        "preferredcodec": preferred_codec,
         "outtmpl": os.path.join(
             sources_root,
             sources_dir,
             f"{user_name}_{str(now.year)}{str(now.month)}{str(now.day)}{str(now.hour)}{str(now.minute)}{str(now.second)}.%(ext)s"
-        ),
-        "preferredcodec": preferred_codec,
+        )
     })
 
     info = ytdl_video.extract_info(request_str, download=True)
@@ -64,7 +94,17 @@ def download_file(request_str, sound_only_flag):
     return result, video_data_dict
 
 
-def upload_file(local_path_str, cloud_path_str, extension):
+# ToDo make use of this
+def cleanup(disk):
+    threshold = datetime.datetime.utcnow() - datetime.timedelta(days=7)
+    resources = disk.listdir(global_vars.cloud_dir)
+
+    for resource in resources:
+        if resource.created < threshold:
+            disk.remove(resource.path)
+
+
+def upload_file(local_path_str, cloud_path_str, title, extension):
     disk = yadisk.YaDisk(token=global_vars.YANDEX)
 
     if not disk.check_token():
@@ -73,10 +113,13 @@ def upload_file(local_path_str, cloud_path_str, extension):
         if not disk.exists(global_vars.cloud_dir):
             disk.mkdir(global_vars.cloud_dir)
 
-        disk.upload(local_path_str, cloud_path_str, timeout=300.0)
-        disk.rename(cloud_path_str, cloud_path_str.split("/")[-1] + extension)
+        final_name = title.replace("/", "|") + extension
 
-        result = disk.publish(cloud_path_str + extension).get_download_link()
+        if not disk.exists(global_vars.cloud_dir + "/" + final_name):
+            disk.upload(local_path_str, cloud_path_str, timeout=300.0)
+            disk.rename(cloud_path_str, final_name)
+
+        result = disk.publish(global_vars.cloud_dir + "/" + final_name).get_download_link()
 
         disk.close()
 
@@ -110,7 +153,7 @@ print("Вспомогательный процесс-загрузчик запу
 while True:
     if os.path.exists(global_vars.files_to_upload):
         with open(global_vars.files_to_upload, "r", encoding="utf-8") as f:
-            files = list(ast.literal_eval(f.read()))
+            files = shuffle_requests(list(ast.literal_eval(f.read())))
 
         f.close()
 
@@ -130,7 +173,7 @@ while True:
             local_path = os.path.join(sources_root, sources_dir, file_path)
             cloud_path = global_vars.cloud_dir + "/" + (file_path.split("/")[-1]).split(".")[0]
 
-            mark_as_uploaded(video_data, upload_file(local_path, cloud_path, ext))
+            mark_as_uploaded(video_data, upload_file(local_path, cloud_path, video_data["title"], ext))
             os.remove(local_path)
 
         time.sleep(1)
