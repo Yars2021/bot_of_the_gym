@@ -116,10 +116,7 @@ class InternetCommands(commands.Cog, name="internet"):
                         utils.separate_date(video_upload_date),
                         video_description
                     )
-
-                    for video_embed in video_embeds:
-                        print(video_embed)
-
+                    
                     for video_embed in video_embeds:
                         await (await self.bot.fetch_user(user_id)).send(embed=video_embed)
 
