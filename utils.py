@@ -129,7 +129,10 @@ def full_music_cover_embed(title, text):
 
 
 def separate_date(date: str):
-    return date[-2:] + "." + date[-4:-2] + "." + date[:-4]
+    if date.find(".") != -1:
+        return date
+    else:
+        return date[-2:] + "." + date[-4:-2] + "." + date[:-4]
 
 
 def is_playlist_link(request):
