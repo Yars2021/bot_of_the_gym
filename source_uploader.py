@@ -45,10 +45,10 @@ def shuffle_requests(request_list):
 
 def get_data(request_data_dict):
     return int(request_data_dict["requester"]), request_data_dict["name"], request_data_dict["request"],\
-        (request_data_dict["format_flag"] == "True")
+        (request_data_dict["format_flag"] == "True"), (request_data_dict["include_description"] == "True")
 
 
-def download_file(request_str, sound_only_flag):
+def download_file(request_str, sound_only_flag, description_flag):
     global sources_root
     global sources_dir
 
@@ -90,6 +90,9 @@ def download_file(request_str, sound_only_flag):
             "description": info["entries"][0]["description"],
             "upload_date": info["entries"][0]["upload_date"]
         }
+
+    if not description_flag:
+        video_data_dict["description"] = " "
 
     return result, video_data_dict
 
@@ -158,14 +161,14 @@ while True:
         f.close()
 
         if len(files) > 0:
-            user_id, user_name, request, sound_only = get_data(files.pop(0))
+            user_id, user_name, request, sound_only, include_description = get_data(files.pop(0))
 
             with open(global_vars.files_to_upload, "w", encoding="utf-8") as f:
                 json.dump(files, f)
 
             f.close()
 
-            filename, video_data = download_file(request, sound_only)
+            filename, video_data = download_file(request, sound_only, include_description)
             file_path, ext = os.path.splitext(filename)
 
             os.rename(file_path + ext, file_path)

@@ -34,7 +34,8 @@ class InternetCommands(commands.Cog, name="internet"):
         description="Скачать звук/видео по ссылке (YouTube)"
     )
     async def command_youtube_src(self, ctx: discord.ApplicationContext, request: str,
-                                  sound_only: discord.Option(bool, required=False, default=False)):
+                                  sound_only: discord.Option(bool, required=False, default=False),
+                                  include_description: discord.Option(bool, required=False, default=True)):
         await ctx.respond(embed=utils.info_embed("Запрос отправлен"),
                           ephemeral=True,
                           delete_after=utils.MESSAGE_TIMER[1])
@@ -65,7 +66,8 @@ class InternetCommands(commands.Cog, name="internet"):
                 "requester": str(ctx.user.id),
                 "name": str(ctx.user.global_name),
                 "request": info["webpage_url"],
-                "format_flag": str(sound_only)
+                "format_flag": str(sound_only),
+                "include_description": str(include_description)
             })
         else:
             if "entries" in info:
@@ -75,7 +77,8 @@ class InternetCommands(commands.Cog, name="internet"):
                             "requester": str(ctx.user.id),
                             "name": str(ctx.user.global_name),
                             "request": entry["url"],
-                            "format_flag": str(sound_only)
+                            "format_flag": str(sound_only),
+                            "include_description": str(include_description)
                         })
 
         with open(global_vars.files_to_upload, "w", encoding="utf-8") as f:
