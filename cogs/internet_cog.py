@@ -71,18 +71,24 @@ class InternetCommands(commands.Cog, name="internet"):
                 f.close()
 
                 user_id = int(uploaded_file["requester"])
-                result = uploaded_file["result"]
+                result_link = uploaded_file["result"]
                 video_title = uploaded_file["title"]
+                video_uploader = uploaded_file["uploader"]
+                video_description = uploaded_file["description"]
+                video_upload_date = uploaded_file["upload_date"]
 
-                if result == "token_fail":
-                    await (await self.bot.fetch_user(user_id)).send(embed=utils.error_embed(result))
+                if result_link == "token_fail":
+                    await (await self.bot.fetch_user(user_id)).send(embed=utils.error_embed(result_link))
                 else:
-                    await (await self.bot.fetch_user(user_id)).send(
-                        embed=utils.full_info_embed(
-                            "Загрузить файл",
-                            f"[{video_title}]({result})"
-                        )
-                    )
+                    video_embed = discord.Embed(title=video_title,
+                                                url=result_link,
+                                                description="```" + video_description + "```",
+                                                colour=0x9e9e9e)
+
+                    video_embed.set_author(name=video_uploader)
+                    video_embed.set_footer(text=utils.separate_date(video_upload_date))
+
+                    await (await self.bot.fetch_user(user_id)).send(embed=video_embed)
 
     @commands.Cog.listener()
     async def on_ready(self):

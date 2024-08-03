@@ -84,6 +84,10 @@ def full_music_cover_embed(title, text):
     return message_embed(title, text, 0xff622e)
 
 
+def separate_date(date: str):
+    return date[-2:] + "." + date[-4:-2] + "." + date[:-4]
+
+
 def read_config(path):
     with open(path, "r", encoding="utf-8") as config_file:
         config = ast.literal_eval(config_file.read())

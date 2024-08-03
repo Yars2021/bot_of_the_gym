@@ -46,7 +46,22 @@ def download_file(request_str, sound_only_flag):
 
     ytdl_video.close()
 
-    return result, info["title"]
+    if "entries" not in info:
+        video_data_dict = {
+            "title": info["title"],
+            "uploader": info["uploader"],
+            "description": info["description"],
+            "upload_date": info["upload_date"]
+        }
+    else:
+        video_data_dict = {
+            "title": info["entries"][0]["title"],
+            "uploader": info["entries"][0]["uploader"],
+            "description": info["entries"][0]["description"],
+            "upload_date": info["entries"][0]["upload_date"]
+        }
+
+    return result, video_data_dict
 
 
 def upload_file(local_path_str, cloud_path_str, extension):
@@ -68,7 +83,7 @@ def upload_file(local_path_str, cloud_path_str, extension):
     return result
 
 
-def mark_as_uploaded(video_title: str, result: str):
+def mark_as_uploaded(video_data_dict, result: str):
     with open(global_vars.uploaded_files, "r", encoding="utf-8") as f:
         ready_files = list(ast.literal_eval(f.read()))
 
@@ -77,7 +92,10 @@ def mark_as_uploaded(video_title: str, result: str):
     ready_files.append({
         "requester": str(user_id),
         "result": result,
-        "title": video_title
+        "title": video_data_dict["title"],
+        "uploader": video_data_dict["uploader"],
+        "description": video_data_dict["description"],
+        "upload_date": video_data_dict["upload_date"]
     })
 
     with open(global_vars.uploaded_files, "w", encoding="utf-8") as f:
@@ -104,7 +122,7 @@ while True:
 
             f.close()
 
-            filename, title = download_file(request, sound_only)
+            filename, video_data = download_file(request, sound_only)
             file_path, ext = os.path.splitext(filename)
 
             os.rename(file_path + ext, file_path)
@@ -112,7 +130,7 @@ while True:
             local_path = os.path.join(sources_root, sources_dir, file_path)
             cloud_path = global_vars.cloud_dir + "/" + (file_path.split("/")[-1]).split(".")[0]
 
-            mark_as_uploaded(title, upload_file(local_path, cloud_path, ext))
+            mark_as_uploaded(video_data, upload_file(local_path, cloud_path, ext))
             os.remove(local_path)
 
         time.sleep(1)

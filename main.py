@@ -3,6 +3,7 @@ from discord.ext import commands
 
 import subprocess
 
+import utils
 from configs import global_vars
 
 client = commands.Bot(intents=discord.Intents.all())
