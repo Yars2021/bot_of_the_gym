@@ -224,6 +224,7 @@ while True:
 
         if len(files) > 0:
             user_id, user_name, request, playlist, index, sound_only = get_data(files.pop(0))
+            playlist_display_name = playlist
             playlist = playlist.replace("/", "|").replace(" ", "_")
 
             with open(global_vars.files_to_upload, "w", encoding="utf-8") as f:
@@ -247,7 +248,7 @@ while True:
 
                 if index == "1":
                     playlist_cloud_path = global_vars.cloud_dir + "/" + playlist
-                    mark_playlist_as_uploaded(user_id, playlist, publish_playlist(playlist_cloud_path))
+                    mark_playlist_as_uploaded(user_id, playlist_display_name, publish_playlist(playlist_cloud_path))
 
             os.remove(local_path)
 
