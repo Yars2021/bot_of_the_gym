@@ -61,11 +61,11 @@ def embed_chain(title, text, color, sep=" "):
         return embeds
 
 
-def video_embed_chain(title, url, author, date, description):
+def video_embed_chain(title, url, author, date, description, decorator="```"):
     if len(description) <= 4090:
         video_embed = discord.Embed(title=title,
                                     url=url,
-                                    description="```" + description + "```",
+                                    description=decorator + description + decorator,
                                     colour=0x9e9e9e)
 
         video_embed.set_author(name=author)
@@ -83,12 +83,12 @@ def video_embed_chain(title, url, author, date, description):
                 desc_part += token + "\n"
             else:
                 if not title_flag:
-                    video_embeds.append(discord.Embed(description="```" + desc_part + "```", colour=0x9e9e9e))
+                    video_embeds.append(discord.Embed(description=decorator + desc_part + decorator, colour=0x9e9e9e))
                 else:
                     video_embeds.append(discord.Embed(
                         title=title,
                         url=url,
-                        description="```" + desc_part + "```",
+                        description=decorator + desc_part + decorator,
                         colour=0x9e9e9e))
 
                     title_flag = False
@@ -96,7 +96,7 @@ def video_embed_chain(title, url, author, date, description):
                 desc_part = token + "\n"
 
         if len(desc_part) > 0:
-            video_embeds.append(discord.Embed(description="```" + desc_part + "```", colour=0x9e9e9e))
+            video_embeds.append(discord.Embed(description=decorator + desc_part + decorator, colour=0x9e9e9e))
 
         video_embeds[0].set_author(name=author)
         video_embeds[-1].set_footer(text=separate_date(date))
@@ -129,7 +129,9 @@ def full_music_cover_embed(title, text):
 
 
 def separate_date(date: str):
-    if date.find(".") != -1:
+    if date == "":
+        return ""
+    elif date.find(".") != -1:
         return date
     else:
         return date[-2:] + "." + date[-4:-2] + "." + date[:-4]

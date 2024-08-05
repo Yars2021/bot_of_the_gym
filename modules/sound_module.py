@@ -391,7 +391,7 @@ class SoundModule:
                 await msg.delete()
 
         if len(self.song_queue) <= 0:
-            queue_embeds = utils.header_error_embed("Очередь пуста")
+            queue_embeds = [utils.header_error_embed("Очередь пуста")]
         else:
             message = ""
 
@@ -400,10 +400,8 @@ class SoundModule:
 
             queue_embeds = utils.embed_chain("Очередь музыки", message, 0x7a00f5, sep="\n")
 
-        self.last_queue_msg = [await channel.send(embed=queue_embeds.pop(0))]
-
-        while len(queue_embeds) > 0:
-            self.last_queue_msg.append(await channel.send(embed=queue_embeds.pop(0)))
+        for queue_embed in queue_embeds:
+            self.last_queue_msg.append(await channel.send(embed=queue_embed))
 
         await self.reset_player(channel)
 

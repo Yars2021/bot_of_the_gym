@@ -34,8 +34,7 @@ class InternetCommands(commands.Cog, name="internet"):
         description="Скачать звук/видео по ссылке (YouTube)"
     )
     async def command_youtube_src(self, ctx: discord.ApplicationContext, request: str,
-                                  sound_only: discord.Option(bool, required=False, default=False),
-                                  include_description: discord.Option(bool, required=False, default=True)):
+                                  sound_only: discord.Option(bool, required=False, default=False)):
         await ctx.respond(embed=utils.info_embed("Запрос отправлен"),
                           ephemeral=True,
                           delete_after=utils.MESSAGE_TIMER[1])
@@ -65,21 +64,31 @@ class InternetCommands(commands.Cog, name="internet"):
             files.append({
                 "requester": str(ctx.user.id),
                 "name": str(ctx.user.global_name),
+                "playlist": "",
+                "index": "0",
                 "request": info["webpage_url"],
-                "format_flag": str(sound_only),
-                "include_description": str(include_description)
+                "format_flag": str(sound_only)
             })
         else:
             if "entries" in info:
+                entry_index = 0
+
+                for entry in info["entries"]:
+                    if entry is not None:
+                        entry_index += 1
+
                 for entry in info["entries"]:
                     if entry is not None:
                         files.append({
                             "requester": str(ctx.user.id),
                             "name": str(ctx.user.global_name),
+                            "playlist": info["title"],
+                            "index": str(entry_index),
                             "request": entry["url"],
-                            "format_flag": str(sound_only),
-                            "include_description": str(include_description)
+                            "format_flag": str(sound_only)
                         })
+
+                        entry_index -= 1
 
         with open(global_vars.files_to_upload, "w", encoding="utf-8") as f:
             json.dump(files, f)
@@ -112,16 +121,24 @@ class InternetCommands(commands.Cog, name="internet"):
                 if result_link == "token_fail":
                     await (await self.bot.fetch_user(user_id)).send(embed=utils.error_embed(result_link))
                 else:
+                    if video_description == "":
+                        decorator = ""
+                    else:
+                        decorator = "```"
+
                     video_embeds = utils.video_embed_chain(
                         video_title,
                         result_link,
                         video_uploader,
                         utils.separate_date(video_upload_date),
-                        video_description
+                        video_description,
+                        decorator=decorator
                     )
 
+                    user = await self.bot.fetch_user(user_id)
+
                     for video_embed in video_embeds:
-                        await (await self.bot.fetch_user(user_id)).send(embed=video_embed)
+                        await user.send(embed=video_embed)
 
     @commands.Cog.listener()
     async def on_ready(self):
