@@ -224,7 +224,7 @@ while True:
 
         if len(files) > 0:
             user_id, user_name, request, playlist, index, sound_only = get_data(files.pop(0))
-            playlist = playlist.replace("/", "|")
+            playlist = playlist.replace("/", "|").replace(" ", "_")
 
             with open(global_vars.files_to_upload, "w", encoding="utf-8") as f:
                 json.dump(files, f)
