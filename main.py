@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 
-import subprocess
 
 from configs import global_vars
 
@@ -40,7 +39,5 @@ async def on_connect():
 async def on_ready():
     print("Бот активен!")
 
-
-subprocess.Popen(["python3", "./source_uploader.py"])
 
 client.run(global_vars.MAIN_TOKEN)

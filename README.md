@@ -3,7 +3,6 @@
 ```json
 {
   "discord-main-token": "Токен бота",
-  "yandex-token": "Токен яндекса",
   "server": "id сервера",
   "channel": "id канала бота",
   "admins": [
