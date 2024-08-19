@@ -14,7 +14,7 @@ from threading import Thread
 
 
 class SoundModule:
-    def __init__(self):
+    def __init__(self, yt_username, yt_password):
         self.sounds_active = False
         self.listening = False
         self.sound_queue = []
@@ -40,10 +40,14 @@ class SoundModule:
             "options": "-vn"
         }
         self.ytdl_playlist_info_options = {
+            "username": yt_username,
+            "password": yt_password,
             "extract_flat": True,
             "skip_download": True
         }
         self.ytdl_full_options = {
+            "username": yt_username,
+            "password": yt_password,
             "format": "bestaudio/best",
             "outtmpl": os.path.join(self.music_root, self.music_dir, "%(extractor)s-%(id)s-%(title)s.%(ext)s"),
             "restrictfilenames": True,
